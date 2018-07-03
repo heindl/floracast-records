@@ -5,8 +5,9 @@ from __future__ import absolute_import
 from idigbio import pandas
 import pandas as pd
 from pandas.io.json import json_normalize
-from florecords.occurrences.struct import Occurrence
+from florecords.occurrences.generator import OccurrenceGenerator
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
+import datetime
 
 FIELDS = [
     'uuid',
@@ -23,9 +24,9 @@ FIELDS = [
     # 'countrycode',
     # 'county',
     # 'datasetid',
-    # 'datecollected',
+    'datecollected',
     'datemodified',
-    'eventdate', # Appears to be the same as datecollected,
+    # 'eventdate', # Appears to be the same as datecollected,
                    # except NaN when the event date is in the early part of last center.
     # 'verbatimeventdate', # Mostly missing or non-specific
     # 'dqs', # Believe this is a data quality score.
@@ -70,13 +71,13 @@ def FetchOccurrences(
         rq={
             "eventdate": {
                 "type": "range",
-                "gte": params.observed_after,
-                "lte": params.observed_before
+                "gte": datetime.datetime.fromtimestamp(params.observed_after).strftime("%Y-%m-%d"),
+                "lte": datetime.datetime.fromtimestamp(params.observed_before).strftime("%Y-%m-%d")
             },
             "datemodified": {
                 "type": "range",
-                "gte": params.updated_after,
-                "lte": params.updated_before
+                "gte": datetime.datetime.fromtimestamp(params.updated_after).strftime("%Y-%m-%d"),
+                "lte": datetime.datetime.fromtimestamp(params.updated_before).strftime("%Y-%m-%d")
             },
             "geopoint": {
                 "type": "geo_bounding_box",
@@ -104,20 +105,27 @@ def FetchOccurrences(
         lat=coords['lat'].values,
         lng=coords['lon'].values,
         source=lambda x: 'idigbio',
-        id=df.index.values
+        source_id=df.index.values
     )
 
     df.rename(
         columns={
             'scientificname': 'name',
-            'eventdate': 'date',
+            'datecollected': 'observed_at',
             'coordinateuncertainty': 'coord_uncertainty',
-            'datemodified': 'modified'
+            'datemodified': 'modified_at'
         },
         inplace=True
     )
 
+    # Convert to EpochTime
+    df['observed_at']  = pd.to_datetime(df['observed_at'])
+    df['observed_at'] = (df['observed_at'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+
+    df['modified_at']  = pd.to_datetime(df['modified_at'])
+    df['modified_at'] = (df['modified_at'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+
     df = FilterOccurrenceDataframe(df, params)
 
     for record in df.to_dict('records'):
-        yield Occurrence(**record)
+        yield OccurrenceGenerator(**record)

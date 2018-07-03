@@ -3,10 +3,11 @@
 
 import requests
 import pandas
-from florecords.occurrences.struct import Occurrence
 from pandas.io.json.normalize import json_normalize
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
 import math
+from florecords.occurrences.generator import OccurrenceGenerator
+import datetime
 
 # Note that most of these are nested json structs.
 fields = [
@@ -42,7 +43,7 @@ fields = [
     # "oauth_application_id",
     # "obscured",
     # "observation_photos",
-    "observed_on",
+    # "observed_on",
     # "observed_on_details",
     # "observed_on_string",
     # "observed_time_zone",
@@ -69,7 +70,7 @@ fields = [
     # "species_guess",
     # "tags",
     "taxon",
-    # "time_observed_at",
+    "time_observed_at",
     # "time_zone_offset",
     "updated_at",
     # "uri",
@@ -103,9 +104,9 @@ def _get_pages(
         "nelat": params.max_y,
         "swlng": params.min_x,
         "swlat": params.min_y,
-        "d1": params.observed_after,
-        "d2": params.observed_before,
-        "updated_since": params.updated_after,
+        "d1": datetime.datetime.fromtimestamp(params.observed_after).strftime("%Y-%m-%d"),
+        "d2": datetime.datetime.fromtimestamp(params.observed_before).strftime("%Y-%m-%d"),
+        "updated_since": datetime.datetime.fromtimestamp(params.updated_after).strftime("%Y-%m-%d"),
         "taxon_id": family_id
         # "confidence": 2,
     }
@@ -162,14 +163,22 @@ def FetchOccurrences(
         )
 
         df.rename(columns={
-            'observed_on': 'date',
-            'updated_at': 'modified',
+            'id': 'source_id',
+            'time_observed_at': 'observed_at',
+            'updated_at': 'modified_at',
             'positional_accuracy': 'coord_uncertainty',
         }, inplace=True)
+
+        # Convert to EpochTime
+        df['observed_at']  = pandas.to_datetime(df['observed_at'])
+        df['observed_at'] = (df['observed_at'] - pandas.Timestamp("1970-01-01")) // pandas.Timedelta('1s')
+
+        df['modified_at']  = pandas.to_datetime(df['modified_at'])
+        df['modified_at'] = (df['modified_at'] - pandas.Timestamp("1970-01-01")) // pandas.Timedelta('1s')
 
         df = df[df.ancestry.str.contains(family_id)]
 
         df = FilterOccurrenceDataframe(df, params)
 
         for record in df.to_dict('records'):
-            yield Occurrence(**record)
+            yield OccurrenceGenerator(**record)

@@ -5,8 +5,9 @@ import requests
 import pandas as pd
 from io import StringIO
 import json
-from florecords.occurrences.struct import Occurrence
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
+from florecords.occurrences.generator import OccurrenceGenerator
+import datetime
 
 fields = [
     "id",
@@ -120,18 +121,27 @@ def FetchOccurrences(
 
     df.rename(columns={
         'scientificName': 'name',
-        'eventDate': 'date',
+        'eventDate': 'observed_at',
+        'modified': 'modified_at',
         'decimalLatitude': 'lat',
         'decimalLongitude': 'lng',
-        'coordinateUncertaintyInMeters': 'coord_uncertainty'
+        'coordinateUncertaintyInMeters': 'coord_uncertainty',
+        'id': 'source_id'
     }, inplace=True)
 
     df = df.assign(source = lambda x: 'mycoportal')
 
+    # Convert to EpochTime
+    df['observed_at']  = pd.to_datetime(df['observed_at'])
+    df['observed_at'] = (df['observed_at'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+
+    df['modified_at']  = pd.to_datetime(df['modified_at'])
+    df['modified_at'] = (df['modified_at'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+
     df = FilterOccurrenceDataframe(df, params)
 
     for record in df.to_dict('records'):
-        yield Occurrence(**record)
+        yield OccurrenceGenerator(**record)
 
 
 def _fetch(
@@ -143,8 +153,8 @@ def _fetch(
         "usethes": True,
         "taxontype": "1",
         "db": "all",
-        "eventdate1": params.observed_after,
-        "eventdate2": params.observed_before,
+        "eventdate1": datetime.datetime.fromtimestamp(params.observed_after).strftime("%Y-%m-%d"),
+        "eventdate2": datetime.datetime.fromtimestamp(params.observed_before).strftime("%Y-%m-%d"),
         "taxa": params.family
     }
 

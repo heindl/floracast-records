@@ -3,8 +3,10 @@
 
 from pygbif import occurrences, species
 import pandas as pd
-from florecords.occurrences.struct import Occurrence
+from florecords.occurrences.generator import OccurrenceGenerator
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
+import datetime
+from typing import Dict
 
 gbif_fields = [
     # "acceptedNameUsage",
@@ -109,11 +111,17 @@ def FetchOccurrences(
     while True:
 
         j = occurrences.search(
-            eventDate="%s,%s" % (params.observed_after, params.observed_before),
+            eventDate="%s,%s" % (
+                datetime.datetime.fromtimestamp(params.observed_after).strftime("%Y-%m-%d"),
+                datetime.datetime.fromtimestamp(params.observed_before).strftime("%Y-%m-%d"),
+            ),
             decimalLongitude="%f,%f" % (params.min_x, params.max_x),
             decimalLatitude="%f,%f" % (params.min_y, params.max_y),
             # Using year month here because narrowing
-            modified="%s,%s" % (params.updated_after, params.updated_before),
+            modified="%s,%s" % (
+                datetime.datetime.fromtimestamp(params.updated_after).strftime("%Y-%m-%d"),
+                datetime.datetime.fromtimestamp(params.updated_before).strftime("%Y-%m-%d")
+            ),
             taxonKey=family_key,
             hasCoordinate=True,
             offset=offset,
@@ -126,7 +134,7 @@ def FetchOccurrences(
         offset += len(j['results'])
 
         for record in _parse_results(j['results'], params):
-            yield Occurrence(**record)
+            yield OccurrenceGenerator(**record)
 
         if j['endOfRecords'] is True:
             break
@@ -142,15 +150,23 @@ def _parse_results(
 
     df.rename(columns={
         'scientificName': 'name',
-        'eventDate': 'date',
+        'eventDate': 'observed_at',
+        'modified': 'modified_at',
         'coordinateUncertaintyInMeters': 'coord_uncertainty',
         'decimalLatitude': 'lat',
         'decimalLongitude': 'lng',
-        'gbifID': 'id',
+        'gbifID': 'source_id',
         # 'lastInterpreted': 'modified'
     }, inplace=True)
 
     df = df.assign(source = lambda x: 'gbif')
+
+    # Convert to EpochTime
+    df['observed_at']  = pd.to_datetime(df['observed_at'])
+    df['observed_at'] = (df['observed_at'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
+
+    df['modified_at']  = pd.to_datetime(df['modified_at'])
+    df['modified_at'] = (df['modified_at'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
 
     df = FilterOccurrenceDataframe(df, params)
 

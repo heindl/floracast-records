@@ -4,6 +4,8 @@
 from florecords.occurrences.fetchers.utils import FetchParams
 from florecords.occurrences.fetchers import gbif, idigb, inat, mycp, muob
 import logging
+from typing import List
+import itertools
 
 callers = {
     'gbif': gbif.FetchOccurrences,
@@ -16,16 +18,18 @@ callers = {
 OCCURRENCE_SOURCES = callers.keys()
 
 def FetchOccurrences(
-        source, # type: str
-        params, # type: FetchParams
+        params, # type: FetchParams,
+        sources, # type: List[str]
 ):
-
-    if source not in callers:
-        raise ValueError("Invalid Occurrence Fetch Source")
+    chained = []
+    for source in sources:
+        if source not in callers:
+            raise ValueError("Invalid Occurrence Fetch Source")
+        chained.append(callers.get(source)(params))
 
     c = 0
-    for r in callers.get(source)(params):
+    for r in itertools.chain(*chained):
         yield r
         c += 1
 
-    logging.info("Occurrences [%d] fetched for source [%s, %s]", c, source, params.family)
+    logging.info("Occurrences [%d] fetched for sources [%s] and family [%s]", c, sources, params.family)

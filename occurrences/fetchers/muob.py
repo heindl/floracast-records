@@ -3,11 +3,12 @@
 
 import requests
 import pandas
-from florecords.occurrences.struct import Occurrence
+from florecords.occurrences.generator import OccurrenceGenerator
 from pandas.io.json.normalize import json_normalize
 from geographiclib.geodesic import Geodesic
 WGS84 = Geodesic.WGS84
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
+import datetime
 
 # Note that most of these are nested json structs.
 fields = [
@@ -70,8 +71,14 @@ def _get_pages(
         "north": params.max_y,
         "west": params.min_x,
         "south": params.min_y,
-        "date": params.observed_after+"-"+params.observed_before,
-        "updated_at": params.updated_after+'-'+params.updated_before,
+        "date": '%s-%s' % (
+            datetime.datetime.fromtimestamp(params.observed_after).strftime("%Y-%m-%d"),
+            datetime.datetime.fromtimestamp(params.observed_before).strftime("%Y-%m-%d")
+        ),
+        "updated_at": '%s-%s' % (
+            datetime.datetime.fromtimestamp(params.updated_after).strftime("%Y-%m-%d"),
+            datetime.datetime.fromtimestamp(params.updated_before).strftime("%Y-%m-%d")
+        ),
         "children_of": params.family
         # "confidence": 2,
     }
@@ -115,10 +122,20 @@ def FetchOccurrences(
         )
 
         df.rename(columns={
-            'updated_at': 'modified',
+            'updated_at': 'modified_at',
+            'date': 'observed_at',
+            'id': 'source_id'
         }, inplace=True)
+
+        # Convert to EpochTime
+        df['observed_at']  = pandas.to_datetime(df['observed_at'])
+        df['observed_at'] = (df['observed_at'] - pandas.Timestamp("1970-01-01")) // pandas.Timedelta('1s')
+
+        df['modified_at']  = pandas.to_datetime(df['modified_at'])
+        df['modified_at'] = (df['modified_at'] - pandas.Timestamp("1970-01-01")) // pandas.Timedelta('1s')
+
 
         df = FilterOccurrenceDataframe(df, params)
 
         for record in df.to_dict('records'):
-            yield Occurrence(**record)
+            yield OccurrenceGenerator(**record)

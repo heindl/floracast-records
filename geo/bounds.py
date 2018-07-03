@@ -1,9 +1,5 @@
 # from geopy import Point
 # from geopy.distance import vincenty
-from geographiclib.geodesic import Geodesic
-WGS84 = Geodesic.WGS84
-# import s2sphere
-from s2_py import S2LatLng, S2LatLngRect, S2RegionCoverer
 
 # class GeospatialBounds:
 #     def __init__(self, lat=0, lng=0, radius_kilometers=0):
@@ -37,38 +33,6 @@ from s2_py import S2LatLng, S2LatLngRect, S2RegionCoverer
 #
 #     def west(self):
 #         return self._from_center(270).longitude
-
-def GenerateS2CellIds(centre_lat, centre_lng, coordinate_uncertainty=None):
-
-    print(centre_lat, centre_lng, coordinate_uncertainty)
-
-    radius = coordinate_uncertainty / 2 if (coordinate_uncertainty is not None) else 0
-
-    w = WGS84.Direct(centre_lat, centre_lng, 270, radius)['lon2']
-    n = WGS84.Direct(centre_lat, centre_lng, 0, radius)['lat2']
-    e = WGS84.Direct(centre_lat, centre_lng, 90, radius)['lon2']
-    s = WGS84.Direct(centre_lat, centre_lng, 180, radius)['lat2']
-
-    rectangle = S2LatLngRect(
-        S2LatLng.FromDegrees(s, w),
-        S2LatLng.FromDegrees(n, e),
-    )
-
-    print("area", rectangle.Area() / 12.56637 * 510072000000)
-
-    region = S2RegionCoverer()
-    region.set_max_cells(1000)
-    region.set_min_level(16)
-    region.set_max_level(16)
-    # region.max_level = 21
-    # region.min_level = 21
-    #
-
-    cell_ids = region.GetInteriorCovering(rectangle)
-    # if len(cell_ids) == 0:
-    # cell_ids = region.GetCovering(rectangle)
-
-    return [i.id() for i in cell_ids]
 
 
 # Note that this may be an effective solution:
