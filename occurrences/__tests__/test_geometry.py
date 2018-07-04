@@ -2,7 +2,7 @@
 # encoding: utf-8
 
 import unittest
-from florecords.occurrences.struct import OccurrenceGenerator
+from florecords.occurrences.compiler import OccurrenceCompiler
 import numpy
 import time
 
@@ -24,7 +24,7 @@ class TestGeometry(unittest.TestCase):
             (35.8021685, -82.3451891, 28000, 120),
             (35.8021685, -82.3451891, 32000, 120),
         ]):
-            g = OccurrenceGenerator(
+            g = OccurrenceCompiler(
                 id="1",
                 scientific_name="Morchella delisiosa",
                 observation_datetime=int(time.time()),

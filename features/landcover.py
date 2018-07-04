@@ -12,7 +12,23 @@ class Landcover(BaseFeatureGenerator):
 
     def schema(self):
         return [
-            ('landcover', 'string'),
+            {
+                "name": "landcover",
+                "type": "RECORD",
+                "mode": "REPEATED",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": "INTEGER",
+                        "mode": "REQUIRED"
+                    },
+                    {
+                        "name": "number",
+                        "type": "INTEGER",
+                        "mode": "REQUIRED"
+                    },
+                ],
+            } # 8 bytes * number of cells
         ]
 
     def fan_out(
@@ -25,41 +41,40 @@ class Landcover(BaseFeatureGenerator):
             self,
             request, # type: FeatureRequest
     ):
-        return request.s2_cell_id(4)
+        return request.cell_id()
 
     def database_key_from_request(
             self,
             request, # type: FeatureRequest
     ):
-        return request.location()
+        return request.cell_id()
 
     def database_key_from_saved(
             self,
             record, # type: Dictionary
     ):
-        return record['latitude'], record['longitude'], record['coordinate_uncertainty']
+        return record['cell_id']
 
     def fetch(
             self,
             requests, # type: List[FeatureRequest]
     ):
 
-        fc = ee.FeatureCollection([r.as_geojson_feature() for r in requests])
-        img = ee.Image('ESA/GLOBCOVER_L4_200901_200912_V2_3')
+        features = [r.as_geojson_feature() for r in requests]
+
+        print(features)
+
+        fc = ee.FeatureCollection(features)
+
+        img = ee.Image('ESA/GLOBCOVER_L4_200901_200912_V2_3').select('landcover')
         regions = img.reduceRegions(
-            reducer=ee.Reducer.toList(),
-            scale=30,
-            # Earth engine complained from this missing,
-            # so per the documentation, set it as the first
-            # band's projection.
-            # crs='EPSG:4326',
+            reducer=ee.Reducer.toList().setOutputs(['landcover']),
             collection=fc,
         )
-
         for f in regions.getInfo()['features']:
             props = f['properties']
             for r in requests:
-                if r.id() == props[FeatureRequest.id_geojson_label()]:
-                    r.set_feature('landcover', str(int(props['landcover'])))
+                if str(r.cell_id()) == props['cell_id']:
+                    r.set_feature('landcover', props['landcover'])
                     yield r
                     break

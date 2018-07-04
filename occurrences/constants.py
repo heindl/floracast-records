@@ -9,6 +9,14 @@ STANDARD_S2_CELL_LEVEL = 14
 
 MAX_COORDINATE_UNCERTAINTY_METERS = 64000
 
+# Bounding box that should include a homogenous region of North America.
+DefaultAmericanBoundingBox = {
+    'min_y': 24.5465169,
+    'min_x': -145.1767463,
+    'max_y': 59.5747563,
+    'max_x': -49.0
+}
+
 
 NorthAmericanMacroFungiFamilies = [
     'agaricaceae',

@@ -3,7 +3,7 @@
 
 from pygbif import occurrences, species
 import pandas as pd
-from florecords.occurrences.generator import OccurrenceGenerator
+from florecords.occurrences.compiler import OccurrenceCompiler
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
 import datetime
 from typing import Dict
@@ -134,7 +134,7 @@ def FetchOccurrences(
         offset += len(j['results'])
 
         for record in _parse_results(j['results'], params):
-            yield OccurrenceGenerator(**record)
+            yield OccurrenceCompiler(**record)
 
         if j['endOfRecords'] is True:
             break

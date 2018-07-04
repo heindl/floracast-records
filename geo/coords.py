@@ -4,15 +4,7 @@
 import math
 import numbers
 
-# Bounding box that should include a homogenous region of North America.
-DefaultAmericanBoundingBox = {
-    'min_y': 24.5465169,
-    'min_x': -145.1767463,
-    'max_y': 59.5747563,
-    'max_x': -49.0
-}
-
-def FormatCoordinates(lat, lng, coordinate_uncertainty=None):
+def NormalizeCoordinates(lat, lng, coordinate_uncertainty=None):
     if coordinate_uncertainty is not None and isinstance(coordinate_uncertainty, numbers.Number):
         return round(lat, 6), round(lng, 6), int(round(coordinate_uncertainty, 0))
 

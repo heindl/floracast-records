@@ -3,7 +3,7 @@
 
 import requests
 import pandas
-from florecords.occurrences.generator import OccurrenceGenerator
+from florecords.occurrences.compiler import OccurrenceCompiler
 from pandas.io.json.normalize import json_normalize
 from geographiclib.geodesic import Geodesic
 WGS84 = Geodesic.WGS84
@@ -138,4 +138,4 @@ def FetchOccurrences(
         df = FilterOccurrenceDataframe(df, params)
 
         for record in df.to_dict('records'):
-            yield OccurrenceGenerator(**record)
+            yield OccurrenceCompiler(**record)

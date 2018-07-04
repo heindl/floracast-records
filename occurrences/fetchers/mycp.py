@@ -6,7 +6,7 @@ import pandas as pd
 from io import StringIO
 import json
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
-from florecords.occurrences.generator import OccurrenceGenerator
+from florecords.occurrences.compiler import OccurrenceCompiler
 import datetime
 
 fields = [
@@ -141,7 +141,7 @@ def FetchOccurrences(
     df = FilterOccurrenceDataframe(df, params)
 
     for record in df.to_dict('records'):
-        yield OccurrenceGenerator(**record)
+        yield OccurrenceCompiler(**record)
 
 
 def _fetch(

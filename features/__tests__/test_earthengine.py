@@ -2,7 +2,6 @@
 # encoding: utf-8
 
 import unittest
-from pyflora.earthengine.defs import FormatCoordinates
 from pyflora.earthengine.terrain import Terrain
 
 class TestEarthEngine(unittest.TestCase):

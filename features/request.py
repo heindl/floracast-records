@@ -1,58 +1,32 @@
-from florecords.occurrences.struct import Occurrence
 import ee
 import uuid
 import json
+import datetime
+from florecords.geo.cells import DecodeCellIDAsGeoJSONRectangle
 
 class FeatureRequest():
 
     def __init__(
             self,
-            observation_date, # type: str
-            latitude,
-            longitude,
-            coordinate_uncertainty, # type: int
-            occurrence_keys, # type: List[Tuple[str, str]] # Source, SourceID
-            # Only for testing. An id will be automatically generated
-            request_id=None, # type: str
+            observed_at, # type: float
+            cell_id, # type: int
+            occurrence_ids, # type: List[int] # Source, SourceID
     ):
-
-        self._observation_date = observation_date
-        self._latitude = latitude
-        self._longitude = longitude
-        self._coordinate_uncertainty = coordinate_uncertainty
-        self._occurrence_keys = occurrence_keys
-
-        # The request id is necessary because the response
-        # coordinates will not necessarily identically match the request coordinates.
-        self._request_id = str(uuid.uuid4()) if request_id is None else request_id
-
+        self._observed_at = observed_at
+        self._cell_id = cell_id
+        self._occurrence_ids = occurrence_ids
         self._features = {}
 
-    def location(self):
-        return self._latitude, self._longitude, self._coordinate_uncertainty
-
-    def id(self):
-        return self._request_id
-
-    @staticmethod
-    def id_geojson_label():
-        return 'request_id'
+    def cell_id(self):
+        return self._cell_id
 
     def __repr__(self):
         return json.dumps({
-            'request_id': self._request_id,
-            'date': self._observation_date,
-            'lat': self._latitude,
-            'lng': self._longitude,
-            'occurrence_keys': self._occurrence_keys,
+            'observed_at': str(datetime.datetime.fromtimestamp(self._observed_at)),
+            'cell_id': self._cell_id,
+            'occurrence_ids': self._occurrence_ids,
             'features': self._features,
         })
-
-    # def s2_cell_id(self, level):
-    #     assert isinstance(level, int)
-    #     assert level != 0
-    #     cell_id = s2sphere.CellId.from_lat_lng(s2sphere.LatLng(self._latitude, self._longitude))
-    #     return cell_id.parent(level=level).id()
 
     def set_feature(self, key, value):
         assert isinstance(key, str)
@@ -65,15 +39,13 @@ class FeatureRequest():
         return self._features[key]
 
     def as_geojson_feature(self):
-        f = ee.Feature(
-            geom=ee.Geometry.Point(
-                coords=[self._longitude, self._latitude],
-                proj='EPSG:4326'
+        return ee.Feature(
+            geom=ee.Geometry.Rectangle(
+                coords=DecodeCellIDAsGeoJSONRectangle(self._cell_id),
+                proj='EPSG:4326',
+                geodesic=True,
             ),
-            # The request id is necessary because the response
-            # coordinates will not necessarily identically match the request coordinates.
-            opt_properties={self.id_geojson_label(): self._request_id}
+            opt_properties=ee.Dictionary({
+                "cell_id": str(self._cell_id) # Note this will error if not a string.
+            }),
         )
-        if self._coordinate_uncertainty is not None and self._coordinate_uncertainty > 0:
-            f = f.buffer(self._coordinate_uncertainty)
-        return f

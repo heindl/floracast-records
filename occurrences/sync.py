@@ -4,14 +4,19 @@
 from google.cloud import firestore
 from datetime import datetime
 import logging
+from florecords import backport
 
 firestore_collection = 'OccurrenceFetchHistory'
 
 class SyncHistory(object):
-    def __init__(self, source, family, dt):
+    def __init__(self,
+                 source, # type: str
+                 family, # type: str
+                 fetched_at, # type: float
+                 ):
         self.family = family
         self.source = source
-        self.date = dt.strftime('%Y-%m-%d')
+        self.fetched_at = fetched_at
 
 def FetchOccurrenceSyncHistory(project, limit=None):
 
@@ -30,7 +35,7 @@ def FetchOccurrenceSyncHistory(project, limit=None):
         records.append(SyncHistory(
             source=s[0],
             family=s[1],
-            dt=doc.to_dict()['t']
+            fetched_at=doc.to_dict()['fetched_at']
         ))
     logging.info("Occurrence sync records delivered: %d", len(records))
     return records
@@ -39,29 +44,29 @@ def RegisterOccurrenceSync(
         project, # type: str
         family, # type: str
         source, # type: str
-        dt=None, # type: datetime
+        fetched_at=None, # type: float
 ):
     assert family is not None and len(family) > 0
     assert source is not None and len(source) > 0
     key = '%s+%s' % (source, family)
 
-    if dt is None:
-        dt = datetime.now()
+    if fetched_at is None:
+        fetched_at = backport.timestamp(datetime.utcnow())
 
     collection = firestore.Client(project=project).collection(firestore_collection)
-    collection.document(key).set({'t': dt})
+    collection.document(key).set({'fetched_at': fetched_at})
 
 if __name__ == '__main__':
-    from pyflora.occurrences.combined import OCCURRENCE_SOURCES
-    from pyflora.cloud.utils import default_project
+    from florecords.occurrences.fetch import OCCURRENCE_SOURCES
+    from florecords.cloud.utils import default_project
 
     for src in OCCURRENCE_SOURCES:
         RegisterOccurrenceSync(
             project=default_project(),
             source=src,
             family='amanitaceae',
-            dt=datetime.strptime("2002-01-01", "%Y-%m-%d")
+            fetched_at=backport.timestamp(datetime.strptime("2002-01-01", "%Y-%m-%d"))
         )
 
     for h in FetchOccurrenceSyncHistory(default_project()):
-        print(h.source, h.family, h.date)
+        print(h.source, h.family, h.fetched_at)

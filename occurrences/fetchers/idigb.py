@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from idigbio import pandas
 import pandas as pd
 from pandas.io.json import json_normalize
-from florecords.occurrences.generator import OccurrenceGenerator
+from florecords.occurrences.compiler import OccurrenceCompiler
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
 import datetime
 
@@ -128,4 +128,4 @@ def FetchOccurrences(
     df = FilterOccurrenceDataframe(df, params)
 
     for record in df.to_dict('records'):
-        yield OccurrenceGenerator(**record)
+        yield OccurrenceCompiler(**record)

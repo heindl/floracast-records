@@ -3,20 +3,20 @@
 
 import pandas
 from datetime import datetime
-from florecords.occurrences.constants import NorthAmericanMacroFungiFamilies
-from florecords.occurrences.constants import MINIMUM_OCCURRENCE_TIME_SECONDS
+from florecords.occurrences import constants
+from florecords import backport
 
 class FetchParams(object):
     def __init__(self,
                  family, # type: str
-                 min_x=-180, # type: float
-                 max_x=180, # type: float
-                 min_y=-90, # type: float
-                 max_y=90, # type: float
-                 observed_after=MINIMUM_OCCURRENCE_TIME_SECONDS, # type: int
-                 observed_before=datetime.utcnow().timestamp(), # type: int
-                 updated_after=datetime.utcnow().timestamp(), # type: int
-                 updated_before=datetime.utcnow().timestamp(), # type: int
+                 min_x=constants.DefaultAmericanBoundingBox['min_x'], # type: float
+                 max_x=constants.DefaultAmericanBoundingBox['max_x'], # type: float
+                 min_y=constants.DefaultAmericanBoundingBox['min_y'], # type: float
+                 max_y=constants.DefaultAmericanBoundingBox['max_y'], # type: float
+                 observed_after=constants.MINIMUM_OCCURRENCE_TIME_SECONDS, # type: int
+                 observed_before=backport.timestamp(datetime.utcnow()), # type: int
+                 updated_after=backport.timestamp(datetime.utcnow()), # type: int
+                 updated_before=backport.timestamp(datetime.utcnow()), # type: int
         ):
             self.family = family
             self.min_x = min_x
@@ -28,7 +28,7 @@ class FetchParams(object):
             self.updated_after=updated_after
             self.updated_before=updated_before
 
-            if self.family not in NorthAmericanMacroFungiFamilies:
+            if self.family not in constants.NorthAmericanMacroFungiFamilies:
                 raise ValueError("Unrecognized fungi family: %s" % self.family)
 
 def FilterOccurrenceDataframe(

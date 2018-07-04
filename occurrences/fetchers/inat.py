@@ -6,7 +6,7 @@ import pandas
 from pandas.io.json.normalize import json_normalize
 from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
 import math
-from florecords.occurrences.generator import OccurrenceGenerator
+from florecords.occurrences.compiler import OccurrenceCompiler
 import datetime
 
 # Note that most of these are nested json structs.
@@ -181,4 +181,4 @@ def FetchOccurrences(
         df = FilterOccurrenceDataframe(df, params)
 
         for record in df.to_dict('records'):
-            yield OccurrenceGenerator(**record)
+            yield OccurrenceCompiler(**record)
