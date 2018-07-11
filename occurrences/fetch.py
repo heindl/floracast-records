@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from florecords.occurrences.fetchers.utils import FetchParams
-from florecords.occurrences.fetchers import gbif, idigb, inat, mycp, muob
+from ..occurrences.fetchers.utils import FetchParams
+from ..occurrences.fetchers import gbif, idigb, inat, mycp, muob
 import logging
 from typing import List
 import itertools

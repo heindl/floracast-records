@@ -3,42 +3,40 @@
 
 from google.cloud import firestore
 from datetime import datetime
-import logging
-from florecords import backport
+from ..utils import backport
 
-firestore_collection = 'OccurrenceFetchHistory'
+firestore_collection = u'OccurrenceFetchHistory'
 
 class SyncHistory(object):
     def __init__(self,
-                 source, # type: str
                  family, # type: str
                  fetched_at, # type: float
+                 source, # type: str
                  ):
         self.family = family
         self.source = source
         self.fetched_at = fetched_at
 
-def FetchOccurrenceSyncHistory(project, limit=None):
+def FetchOccurrenceSyncHistory(project, source, restrict_families=None):
+
+    if restrict_families is not None:
+        restrict_families = [s.lower() for s in restrict_families]
 
     collection = firestore \
         .Client(project=project) \
-        .collection(firestore_collection)
+        .collection(backport.as_unicode(firestore_collection)) \
+        .where(u'source', u'==', backport.as_unicode(source))
 
-    if limit is not None:
-        collection = collection.limit(limit)
+    # if limit is not None:
+    #     collection = collection.limit(limit)
 
     # Originally this was a generator but having some issues with beam
     # not receiving all values.
-    records = []
     for doc in collection.get():
-        s = doc.id.split("+")
-        records.append(SyncHistory(
-            source=s[0],
-            family=s[1],
-            fetched_at=doc.to_dict()['fetched_at']
-        ))
-    logging.info("Occurrence sync records delivered: %d", len(records))
-    return records
+        s = SyncHistory(**doc.to_dict())
+        if restrict_families is not None and s.family.lower() not in restrict_families:
+            continue
+        yield s
 
 def RegisterOccurrenceSync(
         project, # type: str
@@ -48,17 +46,21 @@ def RegisterOccurrenceSync(
 ):
     assert family is not None and len(family) > 0
     assert source is not None and len(source) > 0
-    key = '%s+%s' % (source, family)
+    key = backport.quote_encode_string('%s|%s' % (source, family))
 
     if fetched_at is None:
         fetched_at = backport.timestamp(datetime.utcnow())
 
     collection = firestore.Client(project=project).collection(firestore_collection)
-    collection.document(key).set({'fetched_at': fetched_at})
+    collection.document(key).set({
+        'source': source,
+        'family': family,
+        'fetched_at': fetched_at
+    })
 
 if __name__ == '__main__':
-    from florecords.occurrences.fetch import OCCURRENCE_SOURCES
-    from florecords.cloud.utils import default_project
+    from ..occurrences.fetch import OCCURRENCE_SOURCES
+    from ..utils import default_project
 
     for src in OCCURRENCE_SOURCES:
         RegisterOccurrenceSync(
@@ -68,5 +70,6 @@ if __name__ == '__main__':
             fetched_at=backport.timestamp(datetime.strptime("2002-01-01", "%Y-%m-%d"))
         )
 
-    for h in FetchOccurrenceSyncHistory(default_project()):
-        print(h.source, h.family, h.fetched_at)
+    for src in OCCURRENCE_SOURCES:
+        for h in FetchOccurrenceSyncHistory(default_project(), src):
+            print(h.source, h.family, h.fetched_at)

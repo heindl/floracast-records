@@ -3,8 +3,8 @@
 
 import pandas
 from datetime import datetime
-from florecords.occurrences import constants
-from florecords import backport
+from .. import constants
+from ...utils import backport
 
 class FetchParams(object):
     def __init__(self,
@@ -15,7 +15,7 @@ class FetchParams(object):
                  max_y=constants.DefaultAmericanBoundingBox['max_y'], # type: float
                  observed_after=constants.MINIMUM_OCCURRENCE_TIME_SECONDS, # type: int
                  observed_before=backport.timestamp(datetime.utcnow()), # type: int
-                 updated_after=backport.timestamp(datetime.utcnow()), # type: int
+                 updated_after=constants.MINIMUM_OCCURRENCE_TIME_SECONDS, # type: int
                  updated_before=backport.timestamp(datetime.utcnow()), # type: int
         ):
             self.family = family

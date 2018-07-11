@@ -3,113 +3,184 @@
 
 from datetime import datetime
 import numpy
-from florecords.occurrences.constants import NorthAmericanMacroFungiFamilies
-from florecords.geo.cells import GenerateS2CellIds
-from florecords.occurrences import constants
-import hashlib
+from ..occurrences.constants import NorthAmericanMacroFungiFamilies
+from ..geo.cells import GenerateS2CellIds
+from ..occurrences import constants
+from ..utils import backport
+from s2_py import S2CellId
+from typing import Dict, Union
 
 class OccurrenceCompiler(object):
 
     def __init__(self,
                  source_id, # type: str
-                 source, # type: str
+                 source_key, # type: str
+                 name, # type: str
+                 observed_at, # type: float
+                 cell_ids, # List[int]
+                 created_at=None,
+                 ):
+
+        self._source_id = source_id
+        self._source_key = source_key
+        self._name = name # A hack, but the two are separate because a normalized ScientificName is created later.
+        self._observed_at = observed_at
+        self._cell_ids = cell_ids
+        self._created_at = created_at if created_at is not None else backport.timestamp_from_now()
+        self._features = {}
+        self._validate()
+
+    def name(self): # type: () -> str
+        if self._name == "":
+            raise ValueError('Invalid occurrence name')
+        return self._name
+
+    def set_name(self, name):
+        assert isinstance(name, str)
+        assert len(name.strip()) > 0
+        self._name = name
+
+    def observed_at(self): # type: () -> int
+        return int(self._observed_at)
+
+    def source_key(self): # type: () -> str
+        return self._source_key
+
+    def source_id(self): # type: () -> str
+        return self._source_id
+
+    def get_feature(self, label): # type: (str) -> Union[Dict, None]
+        assert isinstance(label, str)
+        assert len(label.strip()) > 0
+        if label in self._features:
+            return self._features[label]
+        return None
+
+    def set_feature(self, label, value): # type: (str, Dict) -> None
+        assert isinstance(label, str)
+        assert len(label.strip()) > 0
+        self._features[label] = value
+
+    def cell_id(self): # type: () -> S2CellId
+
+        if len(self._cell_ids) != 1:
+            raise ValueError("Invalid number of S2CellIds")
+        return S2CellId(self._cell_ids[0])
+
+    def _validate(self):
+        assert len(self._source_id) > 0, "Invalid occurrence id"
+        assert len(self._cell_ids) > 0, "Invalid number of cell ids"
+        assert len(self._name) > 0, "Invalid occurrence scientific name"
+        assert self._observed_at > constants.MINIMUM_OCCURRENCE_TIME_SECONDS
+        if self._source_key not in ["idigbio", "gbif", "inaturalist", "mushroomobserver", "mycoportal"]:
+            raise ValueError("Invalid source: %s", self._source_key)
+
+    # def source_id(self):
+    #     return int(hashlib.md5(("%s+%s" % (self._source, self._source_id)).encode("utf-8")).hexdigest(), 16)
+
+
+
+    def merge(
+            self,
+            new_occurrence, # type: OccurrenceCompiler
+    ):
+        return NotImplemented
+
+    @classmethod
+    def from_raw(cls,
+                 source_id, # type: str
+                 source_key, # type: str
                  name, # type: str
                  observed_at, # type: float
                  lat, # type: float
                  lng, # type: float
                  coord_uncertainty, # type: float
                  family, # type: str
-                 **kwargs
                  ):
 
-        self._source_id = source_id
-        self._scientific_name = name.encode('utf-8', 'replace')
-        self._observed_at = observed_at
-        self._latitude = lat
-        self._longitude = lng
-        self._coordinate_uncertainty = None if numpy.isnan(coord_uncertainty) else coord_uncertainty
-        self._source = source
-        self._created_at = datetime.utcnow()
-        self._family = family
-        self._validate()
+        assert (-90 < lat < 90), "Invalid Latitude: %d" % lat
+        assert (-180 < lng < 180), "Invalid Longitude: %d" % lng
 
-    def scientific_name(self):
-        return self._scientific_name
-
-    def set_scientific_name(self, name):
-        self._scientific_name = name
-
-    def _validate(self):
-        assert len(self._source_id) > 0, "Invalid occurrence id"
-        assert len(self._scientific_name) > 0, "Invalid occurrence scientific name"
-        assert self._observed_at > constants.MINIMUM_OCCURRENCE_TIME_SECONDS
-
-        assert (-90 < self._latitude < 90), "Invalid Latitude: %d" % self._latitude
-        assert (-180 < self._longitude < 180), "Invalid Longitude: %d" % self._longitude
-        if self._family not in NorthAmericanMacroFungiFamilies:
-            raise ValueError("Unrecognized fungi family: %s" % self._family)
-        if self._source not in ['idigbio', 'gbif', 'inaturalist', 'mushroomobserver', 'mycoportal']:
-            raise ValueError("Invalid source: %s", self._source)
-
-    def decompose(self):
-        return GenerateS2CellIds(
-            centre_lat=self._latitude,
-            centre_lng=self._longitude,
-            coordinate_uncertainty=self._coordinate_uncertainty,
+        cell_ids = GenerateS2CellIds(
+            centre_lat=lat,
+            centre_lng=lng,
+            coordinate_uncertainty=None if numpy.isnan(coord_uncertainty) else coord_uncertainty,
             uncertainty_threshold=constants.MAX_COORDINATE_UNCERTAINTY_METERS,
             s2_cell_level=constants.STANDARD_S2_CELL_LEVEL,
         )
 
-
-    def to_bigquery(self):
-
-        cell_ids = [{'id': x} for x in self.decompose()]
-
-        if len(cell_ids) == 0:
+        if cell_ids is None or len(cell_ids) == 0:
             return None
 
-        return {
-            'scientific_name': self._scientific_name,
-            'source_id': hashlib.md5(self._source + "+" + self._source_id).hexdigest(),
-            'created_at': datetime.utcnow().timestamp(),
-            'observed_at': self._observed_at,
-            'cell': cell_ids,
-        }
+        if family not in NorthAmericanMacroFungiFamilies:
+            raise ValueError("Unrecognized fungi family: %s" % family)
 
+        return cls(
+            source_id=source_id,
+            name=name.encode("utf-8", "replace").decode('utf-8'),
+            observed_at=observed_at,
+            source_key=source_key,
+            cell_ids=[c.id() for c in cell_ids],
+        )
+
+    @classmethod
+    def decode(cls, obj):
+
+        c = cls(
+            name=obj['name'],
+            source_id=obj['source_id'],
+            source_key=obj['source_key'],
+            observed_at=obj['observed_at'],
+            cell_ids=[int(obj['cell_id'])],
+        )
+        if 'features' in obj:
+            for k, v in obj['features']:
+                c.set_feature(k, v)
+        return c
+
+    def encode(self):
+        # type: () -> Dict
+
+        return {
+            "name": self.name(),
+            "source_id": self.source_id(),
+            "source_key": self.source_key(),
+            "created_at": self._created_at,
+            "observed_at": int(round(self._observed_at)),
+            "cell_ids": self._cell_ids,
+        }
 
     @staticmethod
     def schema():
         return [
             {
-                'name': 'source_id',
-                'type': 'INTEGER',
-                'mode': 'REQUIRED'
-            }, # 8 bytes
+                "name": "source_id",
+                "type": "STRING",
+                "mode": "REQUIRED"
+            },
             {
-                'name': 'scientific_name',
-                'type': 'STRING',
-                'mode': 'REQUIRED'
-            }, # 20 bytes average
+                "name": "source_key",
+                "type": "STRING",
+                "mode": "REQUIRED"
+            },
             {
-                'name': 'observed_at',
-                'type': 'TIMESTAMP',
-                'mode': 'REQUIRED'
-            }, # 8 bytes
+                "name": "name",
+                "type": "STRING",
+                "mode": "REQUIRED"
+            },
             {
-                'name': 'created_at',
-                'type': 'TIMESTAMP',
-                'mode': 'REQUIRED'
-            }, # 8 bytes
+                "name": "observed_at",
+                "type": "TIMESTAMP",
+                "mode": "REQUIRED"
+            },
             {
-                "name": "cell",
-                "type": "RECORD",
-                "mode": "REPEATED",
-                "fields": [
-                    {
-                        "name": "id",
-                        "type": "int",
-                        "mode": "REQUIRED"
-                    },
-                ],
-            } # 8 bytes * number of cells
+                "name": "created_at",
+                "type": "TIMESTAMP",
+                "mode": "REQUIRED"
+            },
+            {
+                "name": "cell_ids",
+                "type": "FLOAT",
+                "mode": "REPEATED"
+            }
         ]

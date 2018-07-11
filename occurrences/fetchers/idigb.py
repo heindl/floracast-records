@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from __future__ import absolute_import
 from idigbio import pandas
 import pandas as pd
 from pandas.io.json import json_normalize
-from florecords.occurrences.compiler import OccurrenceCompiler
-from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
+from ..compiler import OccurrenceCompiler
+from ..fetchers.utils import FilterOccurrenceDataframe, FetchParams
 import datetime
 
 FIELDS = [

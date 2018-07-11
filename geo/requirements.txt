@@ -1,3 +1,0 @@
-# OPENSSL_ROOT_DIR=/usr/local/opt/openssl pip install s2_py
-s2_py
-geographiclib>=1.49

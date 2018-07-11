@@ -3,11 +3,11 @@
 
 import requests
 import pandas
-from florecords.occurrences.compiler import OccurrenceCompiler
-from pandas.io.json.normalize import json_normalize
+from ..compiler import OccurrenceCompiler
+from pandas.io.json import json_normalize
 from geographiclib.geodesic import Geodesic
 WGS84 = Geodesic.WGS84
-from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
+from ..fetchers.utils import FilterOccurrenceDataframe, FetchParams
 import datetime
 
 # Note that most of these are nested json structs.

@@ -1,8 +1,11 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 import ee
 import uuid
 import json
 import datetime
-from florecords.geo.cells import DecodeCellIDAsGeoJSONRectangle
+from records.geo.cells import DecodeCellIDAsGeoJSONRectangle
 
 class FeatureRequest():
 

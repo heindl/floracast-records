@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+
 # import unittest
 # from example import ParseExampleFromFirestore, Season
 # import datetime

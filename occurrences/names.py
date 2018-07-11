@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
+
 from google.cloud import firestore, exceptions
 import requests
-from urllib.parse import quote_plus
+from ..utils import backport
 import logging
 
 firestore_collection = 'CanonicalNameLabels'
@@ -50,7 +51,7 @@ class ScientificNameParser():
         return json_array[0]['canonical_name']['value'].lower()
 
     def _encode(self, s):
-        return quote_plus(s.lower())
+        return backport.quote_encode_string(s.lower())
 
     def _get_firestore(
         self,
@@ -77,5 +78,3 @@ class ScientificNameParser():
         collection = self._firestore.collection(firestore_collection)
         collection.document(key).set({'n': label})
         collection.document(self._encode(label)).set({'n': label})
-
-

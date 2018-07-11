@@ -2,9 +2,9 @@
 # encoding: utf-8
 
 import unittest
-from florecords.occurrences.sync import FetchOccurrenceSyncHistory
-from florecords.cloud.utils import default_project
-from florecords.occurrences.names import ScientificNameParser
+from records.occurrences.sync import FetchOccurrenceSyncHistory
+from records.cloud.utils import default_project
+from records.occurrences.names import ScientificNameParser
 
 class TestOccurrenceFetch(unittest.TestCase):
 

@@ -3,10 +3,10 @@
 
 import requests
 import pandas
-from pandas.io.json.normalize import json_normalize
-from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
+from pandas.io.json import json_normalize
+from ..fetchers.utils import FilterOccurrenceDataframe, FetchParams
 import math
-from florecords.occurrences.compiler import OccurrenceCompiler
+from ..compiler import OccurrenceCompiler
 import datetime
 
 # Note that most of these are nested json structs.
@@ -130,7 +130,7 @@ def _get_pages(
             pq = q.copy()
             pq['page'] = page
             next_page = session.get(url=u, params=pq).json()
-            if len(next_page['results']) != 0:
+            if 'results' in next_page and len(next_page['results']) > 0:
                 yield next_page['results']
 
 

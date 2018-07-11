@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
 # from geopy import Point
 # from geopy.distance import vincenty
 

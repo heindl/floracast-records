@@ -1,4 +1,6 @@
-# # from __future__ import absolute_import
+#!/usr/bin/env python
+# encoding: utf-8
+
 # import apache_beam as beam
 # import calendar
 # from tensorflow.core.example import example_pb2

@@ -1,25 +1,43 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+import math
+import numbers
 from geographiclib.geodesic import Geodesic
 WGS84 = Geodesic.WGS84
 from s2_py import S2LatLng, S2LatLngRect, S2RegionCoverer, S2CellId, S2Cell
-from florecords.geo.coords import NormalizeCoordinates
+import ee
+from records.occurrences.constants import STANDARD_S2_CELL_LEVEL, MAX_COORDINATE_UNCERTAINTY_METERS
+from typing import Union, List
+# import logging
 
-def DecodeCellIDAsGeoJSONRectangle(
-        i, # type: int
-):
-    cell_id = S2CellId(i)
+
+
+def GeoJSONFeatureFromCellId(
+        cell_id # type: S2CellId
+    ):
+
     rect = S2Cell(cell_id).GetRectBound()
 
-    # format for ee.Geometry.Rectangle()
-    return rect.lng_lo().degrees(), rect.lat_lo().degrees(), rect.lng_hi().degrees(), rect.lat_hi().degrees()
+    bounds = (rect.lng_lo().degrees(), rect.lat_lo().degrees(), rect.lng_hi().degrees(), rect.lat_hi().degrees())
 
-
+    return ee.Feature(
+        geom=ee.Geometry.Rectangle(
+            coords=bounds,
+            proj='EPSG:4326',
+            geodesic=True,
+        ),
+        opt_properties=ee.Dictionary({
+            "cell_id": str(cell_id.id()) # Note this will error if not a string.
+        }),
+    )
 def GenerateS2CellIds(
         centre_lat, # type: float
         centre_lng, # type: float
-        uncertainty_threshold, # type: float
-        s2_cell_level, # type: int
         coordinate_uncertainty=None, # type: Union[None, float]
-    ):
+        uncertainty_threshold=MAX_COORDINATE_UNCERTAINTY_METERS, # type: float
+        s2_cell_level=STANDARD_S2_CELL_LEVEL, # type: int
+    ): # type: (float, float, float, float, int) -> List[S2CellId]
 
     lat, lng, coordinate_uncertainty = NormalizeCoordinates(centre_lat, centre_lng, coordinate_uncertainty)
 
@@ -49,4 +67,43 @@ def GenerateS2CellIds(
     if len(cell_ids) == 0:
         cell_ids = region.GetCovering(rectangle)
 
-    return [i.id() for i in cell_ids]
+    # logging.info("S2 Covering [%d] Generated [%f, %f, %f]", len(cell_ids), lat, lng, coordinate_uncertainty)
+
+    return cell_ids
+
+def NormalizeCoordinates(lat, lng, coordinate_uncertainty=None):
+    if coordinate_uncertainty is not None and isinstance(coordinate_uncertainty, numbers.Number):
+        return round(lat, 6), round(lng, 6), int(round(coordinate_uncertainty, 0))
+
+    (lat_precision, lat_scale) = precision_and_scale(lat)
+    (lng_precision, lng_scale) = precision_and_scale(lng)
+
+    min_scale = min([lat_scale, lng_scale])
+
+    if min_scale >= 6:
+        return (round(lat, 6), round(lng, 6), 0)
+
+    equatorial_precision_in_meters = [
+        111320,
+        11132,
+        1113,
+        111,
+        11,
+        1,
+    ]
+
+    return (lat, lng, equatorial_precision_in_meters[min_scale])
+
+def precision_and_scale(x):
+    max_digits = 14
+    int_part = int(abs(x))
+    magnitude = 1 if int_part == 0 else int(math.log10(int_part)) + 1
+    if magnitude >= max_digits:
+        return (magnitude, 0)
+    frac_part = abs(x) - int_part
+    multiplier = 10 ** (max_digits - magnitude)
+    frac_digits = multiplier + int(multiplier * frac_part + 0.5)
+    while frac_digits % 10 == 0:
+        frac_digits /= 10
+    scale = int(math.log10(frac_digits))
+    return (magnitude + scale, scale)

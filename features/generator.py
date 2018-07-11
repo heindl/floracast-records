@@ -1,61 +1,92 @@
-import abc
-from florecords.features.request import FeatureRequest
-# Outlines required methods
+#!/usr/bin/env python
+# encoding: utf-8
 
+from ..occurrences.compiler import OccurrenceCompiler
+# Outlines required methods
+import abc, six
+from typing import Dict, Tuple, Union, List, NamedTuple
+import ee
+import google.auth
+import os
+
+
+
+@six.add_metaclass(abc.ABCMeta)
 class BaseFeatureGenerator(object):
     __metaclass__  = abc.ABCMeta
 
-    @abc.abstractproperty
-    def schema(self):
-        """
-        Return an array of schema tuples
-        (label, type, required|nullable)
-        """
+    def __init__(self):
+        if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS') is not None:
+            credentials, project_id = google.auth.default()
+            ee.Initialize(credentials=credentials)
+        else:
+            ee.Initialize() # Local authentication
 
+    @staticmethod
     @abc.abstractmethod
-    def fan_out(
-            self,
-            request, # type: FeatureRequest
-    ):
+    def table_name(): # type: () -> str
         """
-        Yield a new array of requests, generally based on the dates. These will be combined again later.
+        Returns static name of table
         """
+        raise NotImplementedError
 
+    @staticmethod
     @abc.abstractmethod
-    def partition_key(
-            self,
-            request, # type: FeatureRequest
-    ):
-       """
-       Return a key to group feature requests for efficient processing by the generator.
-       In most cases, each fetcher will request one date.
-       """
+    def query(table): # type: (str) -> str
+        """
+        Return BigQuery request string that joins with class feature table data.
+        """
+        raise NotImplementedError
 
+    @staticmethod
     @abc.abstractmethod
-    def database_key_from_request(
-            self,
-            request, # type: FeatureRequest
-    ):
+    def combine(t):
+        # type: (Tuple[Tuple[str, str], List[OccurrenceCompiler]]) -> Union[None, OccurrenceCompiler]
         """
-       The key with which to match the original record in the database.
-       """
+        Returns static name of table
+        """
+        raise NotImplementedError
 
+    @staticmethod
     @abc.abstractmethod
-    def database_key_from_saved(
-            self,
-            record, # type: Dictionary
-    ):
+    def is_complete(o): # type: (OccurrenceCompiler) -> bool
         """
-       The key with which to match the original record in the database.
-       """
+        Checks that an occurrence already has the expected feature
+        """
+        raise NotImplementedError
 
-
+    @staticmethod
     @abc.abstractmethod
-    def fetch(
-            self,
-            requests, # type: List[FeatureRequest]
-    ):
+    def schema(): # type: () -> List[Dict]
         """
-        Generate new features for each request, and yield each request with the
-        new data amended.
+        Return an array of schema column definitions for class table
         """
+        raise NotImplementedError
+
+
+    @staticmethod
+    @abc.abstractmethod
+    def partition_key(occurrence): # type: (OccurrenceCompiler) -> Union[Tuple[str, str], str]
+        """
+           Return a key to group feature requests for efficient processing by the generator.
+           In most cases, each fetcher will request one date.
+           """
+        raise NotImplementedError
+
+    @staticmethod
+    @abc.abstractmethod
+    def fetch(occurrences): # type: (List[OccurrenceCompiler]) -> FeatureFetchResult
+        """
+        Generate new features for each request
+        The first result
+        """
+        raise NotImplementedError
+
+FeatureFetchResult = NamedTuple("FeatureFetchResult", [
+    ('bigquery_records', List[Dict]),
+    ('occurrences', List[OccurrenceCompiler])
+])
+
+# class FeatureFetchResult(NamedTuple):
+#     bigquery_records: List[Dict]
+#     occurrences: List[OccurrenceCompiler]

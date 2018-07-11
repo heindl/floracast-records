@@ -5,8 +5,8 @@ import requests
 import pandas as pd
 from io import StringIO
 import json
-from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
-from florecords.occurrences.compiler import OccurrenceCompiler
+from ..fetchers.utils import FilterOccurrenceDataframe, FetchParams
+from ..compiler import OccurrenceCompiler
 import datetime
 
 fields = [
@@ -135,7 +135,11 @@ def FetchOccurrences(
     df['observed_at']  = pd.to_datetime(df['observed_at'])
     df['observed_at'] = (df['observed_at'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
 
-    df['modified_at']  = pd.to_datetime(df['modified_at'])
+    try:
+        df['modified_at']  = pd.to_datetime(df['modified_at'])
+    except:
+        df = df.assign(modified_at = lambda x: pd.Timestamp.now())
+
     df['modified_at'] = (df['modified_at'] - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s')
 
     df = FilterOccurrenceDataframe(df, params)

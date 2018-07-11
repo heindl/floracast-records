@@ -3,8 +3,8 @@
 
 from pygbif import occurrences, species
 import pandas as pd
-from florecords.occurrences.compiler import OccurrenceCompiler
-from florecords.occurrences.fetchers.utils import FilterOccurrenceDataframe, FetchParams
+from ..compiler import OccurrenceCompiler
+from ..fetchers.utils import FilterOccurrenceDataframe, FetchParams
 import datetime
 from typing import Dict
 
