@@ -2,11 +2,10 @@
 # encoding: utf-8
 
 import ee
-from ..features.generator import BaseFeatureGenerator, FeatureFetchResult
-from ..occurrences.compiler import OccurrenceCompiler
-from ..occurrences.bigquery import CompileOccurrenceQuery
-from ..geo.cells import GeoJSONFeatureFromCellId
-from ..utils import backport
+from . import BaseFeatureGenerator, FeatureResponse
+from ..occurrences import CompileOccurrenceSQLQuery, Occurrence
+from ..geo import Cell
+from ..utils import TimeStamp
 from typing import List, Tuple, Union
 import collections
 
@@ -50,19 +49,19 @@ class Landcover(BaseFeatureGenerator):
 
     @staticmethod
     def query(table):
-        return CompileOccurrenceQuery(table)
+        return CompileOccurrenceSQLQuery(table)
 
     @staticmethod
-    def is_complete(o): # type: (OccurrenceCompiler) -> bool
+    def is_complete(o): # type: (Occurrence) -> bool
         return o.get_feature('landcover') is not None
 
     @staticmethod
-    def partition_key(o): # type: (OccurrenceCompiler) -> str
-        return str(o.cell_id().parent(7))
+    def partition_key(o): # type: (Occurrence) -> str
+        return str(o.cell().parent(7))
 
     @staticmethod
     def combine(t):
-        # type: (Tuple[Tuple[str, str], List[OccurrenceCompiler]]) -> Union[None, OccurrenceCompiler]
+        # type: (Tuple[Tuple[str, str], List[Occurrence]]) -> Union[None, Occurrence]
 
         _, occurrences = t
 
@@ -83,12 +82,12 @@ class Landcover(BaseFeatureGenerator):
         return o
 
     @staticmethod
-    def fetch(occurrences): # type: (List[OccurrenceCompiler]) -> FeatureFetchResult
+    def fetch(occurrences): # type: (List[Occurrence]) -> FeatureResponse
 
-        unique_cell_ids = set([r.cell_id() for r in occurrences])
+        unique_cell_ids = set([r.cell().id() for r in occurrences])
 
         fc = ee.FeatureCollection(
-            [GeoJSONFeatureFromCellId(c) for c in unique_cell_ids]
+            [Cell(id).geojson_feature() for id in unique_cell_ids]
         )
 
         img = ee.Image('ESA/GLOBCOVER_L4_200901_200912_V2_3').select('landcover')
@@ -105,14 +104,14 @@ class Landcover(BaseFeatureGenerator):
 
             bigquery_values.append({
                 'cell_id': int(props['cell_id']),
-                'created_at': backport.timestamp_from_now(),
+                'created_at': TimeStamp.from_now(),
                 'landcover': value,
             })
             for o in occurrences:
-                if o.cell_id().ToToken() == props['cell_id']:
+                if str(o.cell()) == props['cell_id']:
                     o.set_feature('landcover', value)
 
-        return FeatureFetchResult(
+        return FeatureResponse(
             bigquery_records=bigquery_values,
             occurrences = occurrences
         )

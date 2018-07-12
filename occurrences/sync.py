@@ -2,10 +2,9 @@
 # encoding: utf-8
 
 from google.cloud import firestore
-from datetime import datetime
-from ..utils import backport
+from ..utils import as_unicode, quote_encode_string, TimeStamp
 
-firestore_collection = u'OccurrenceFetchHistory'
+_firestore_collection = u'OccurrenceFetchHistory'
 
 class SyncHistory(object):
     def __init__(self,
@@ -24,8 +23,8 @@ def FetchOccurrenceSyncHistory(project, source, restrict_families=None):
 
     collection = firestore \
         .Client(project=project) \
-        .collection(backport.as_unicode(firestore_collection)) \
-        .where(u'source', u'==', backport.as_unicode(source))
+        .collection(as_unicode(_firestore_collection)) \
+        .where(u'source', u'==', as_unicode(source))
 
     # if limit is not None:
     #     collection = collection.limit(limit)
@@ -46,12 +45,12 @@ def RegisterOccurrenceSync(
 ):
     assert family is not None and len(family) > 0
     assert source is not None and len(source) > 0
-    key = backport.quote_encode_string('%s|%s' % (source, family))
+    key = quote_encode_string('%s|%s' % (source, family))
 
     if fetched_at is None:
-        fetched_at = backport.timestamp(datetime.utcnow())
+        fetched_at = TimeStamp.from_now()
 
-    collection = firestore.Client(project=project).collection(firestore_collection)
+    collection = firestore.Client(project=project).collection(_firestore_collection)
     collection.document(key).set({
         'source': source,
         'family': family,
@@ -59,17 +58,17 @@ def RegisterOccurrenceSync(
     })
 
 if __name__ == '__main__':
-    from ..occurrences.fetch import OCCURRENCE_SOURCES
+    from .generators import OccurrenceGenerators
     from ..utils import default_project
 
-    for src in OCCURRENCE_SOURCES:
+    for g in OccurrenceGenerators():
         RegisterOccurrenceSync(
             project=default_project(),
-            source=src,
+            source=g.source_key(),
             family='amanitaceae',
-            fetched_at=backport.timestamp(datetime.strptime("2002-01-01", "%Y-%m-%d"))
+            fetched_at=TimeStamp.from_date(2002, 1, 1)
         )
 
-    for src in OCCURRENCE_SOURCES:
-        for h in FetchOccurrenceSyncHistory(default_project(), src):
+    for g in OccurrenceGenerators():
+        for h in FetchOccurrenceSyncHistory(default_project(), g.source_key()):
             print(h.source, h.family, h.fetched_at)

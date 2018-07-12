@@ -3,10 +3,10 @@
 
 from google.cloud import firestore, exceptions
 import requests
-from ..utils import backport
+from ..utils import quote_encode_string
 import logging
 
-firestore_collection = 'CanonicalNameLabels'
+_firestore_collection = 'CanonicalNameLabels'
 
 class ScientificNameParser():
     def __init__(self, project):
@@ -51,7 +51,7 @@ class ScientificNameParser():
         return json_array[0]['canonical_name']['value'].lower()
 
     def _encode(self, s):
-        return backport.quote_encode_string(s.lower())
+        return quote_encode_string(s.lower())
 
     def _get_firestore(
         self,
@@ -59,7 +59,7 @@ class ScientificNameParser():
     ):
         try:
             doc = self._firestore \
-                .collection(firestore_collection) \
+                .collection(_firestore_collection) \
                 .document(key) \
                 .get()
             return doc.to_dict()["n"]
@@ -75,6 +75,6 @@ class ScientificNameParser():
             Label should be the CanonicalName.
             It will be added twice, once for the search key and again for itself.
             """
-        collection = self._firestore.collection(firestore_collection)
+        collection = self._firestore.collection(_firestore_collection)
         collection.document(key).set({'n': label})
         collection.document(self._encode(label)).set({'n': label})

@@ -3,7 +3,7 @@ TABLE_OCCURRENCES = "OccurrencesV3"
 TABLE_RANDOM = "Random"
 TABLE_PROTECTED_AREAS = "ProtectedAreas"
 
-def CompileOccurrenceQuery(table, dates=None):
+def CompileOccurrenceSQLQuery(table, dates=None):
 
     if table not in [TABLE_OCCURRENCES, TABLE_RANDOM, TABLE_PROTECTED_AREAS]:
         raise ValueError("Invalid table name")

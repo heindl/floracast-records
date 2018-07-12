@@ -3,27 +3,37 @@
 
 from datetime import datetime
 import time as mod_time
+from typing import Union
 
 try:
     from urllib.parse import quote_plus
 except ImportError:
     from urllib import quote_plus
 
-def timestamp(
-        dt, # type: datetime
-):
-    try:
-        return int(dt.timestamp())
-    except:
-        return int(mod_time.mktime(dt.timetuple()) + dt.microsecond / 1e6)
+class TimeStamp():
 
-def timestamp_from_date(y, m, d):
-    dt = datetime.utcnow().replace(y, m, d, 0, 0, 0, 0)
-    return timestamp(dt)
+    @staticmethod
+    def format(i, fmt): # type: (int, str) -> str
+        return datetime.fromtimestamp(i).strftime(fmt)
 
-def timestamp_from_now():
-    dt = datetime.utcnow()
-    return timestamp(dt)
+    @staticmethod
+    def from_datetime(dt): # type: (datetime) -> int
+        try:
+            return int(dt.timestamp())
+        except:
+            return int(mod_time.mktime(dt.timetuple()) + dt.microsecond / 1e6)
+
+    @classmethod
+    def from_date(cls, y, m, d): # type: (int, int, int) -> int
+        return TimeStamp.from_datetime(
+            datetime.utcnow().replace(y, m, d, 0, 0, 0, 0)
+        )
+
+    @staticmethod
+    def from_now(): # type: () -> int
+        return TimeStamp.from_datetime(
+            datetime.utcnow()
+        )
 
 
 def quote_encode_string(

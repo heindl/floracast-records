@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from datetime import datetime
 import numpy
-from ..occurrences.constants import NorthAmericanMacroFungiFamilies
-from ..geo.cells import GenerateS2CellIds
-from ..occurrences import constants
-from ..utils import backport
-from s2_py import S2CellId
+from . import NorthAmericanMacroFungiFamilies
+from ..geo import Cell
+from ..utils import TimeStamp
 from typing import Dict, Union
+import constants
+consts = constants.Constants()
 
-class OccurrenceCompiler(object):
+class Occurrence(object):
 
     def __init__(self,
                  source_id, # type: str
@@ -18,7 +17,7 @@ class OccurrenceCompiler(object):
                  name, # type: str
                  observed_at, # type: float
                  cell_ids, # List[int]
-                 created_at=None,
+                 created_at=None, # type: int
                  ):
 
         self._source_id = source_id
@@ -26,7 +25,7 @@ class OccurrenceCompiler(object):
         self._name = name # A hack, but the two are separate because a normalized ScientificName is created later.
         self._observed_at = observed_at
         self._cell_ids = cell_ids
-        self._created_at = created_at if created_at is not None else backport.timestamp_from_now()
+        self._created_at = created_at if created_at is not None else TimeStamp.from_now()
         self._features = {}
         self._validate()
 
@@ -61,17 +60,16 @@ class OccurrenceCompiler(object):
         assert len(label.strip()) > 0
         self._features[label] = value
 
-    def cell_id(self): # type: () -> S2CellId
-
+    def cell(self): # type: () -> Cell
         if len(self._cell_ids) != 1:
             raise ValueError("Invalid number of S2CellIds")
-        return S2CellId(self._cell_ids[0])
+        return Cell(self._cell_ids[0])
 
     def _validate(self):
         assert len(self._source_id) > 0, "Invalid occurrence id"
         assert len(self._cell_ids) > 0, "Invalid number of cell ids"
         assert len(self._name) > 0, "Invalid occurrence scientific name"
-        assert self._observed_at > constants.MINIMUM_OCCURRENCE_TIME_SECONDS
+        assert self._observed_at > consts['minimum_occurrence_observed_timestamp']
         if self._source_key not in ["idigbio", "gbif", "inaturalist", "mushroomobserver", "mycoportal"]:
             raise ValueError("Invalid source: %s", self._source_key)
 
@@ -82,7 +80,7 @@ class OccurrenceCompiler(object):
 
     def merge(
             self,
-            new_occurrence, # type: OccurrenceCompiler
+            new_occurrence, # type: Occurrence
     ):
         return NotImplemented
 
@@ -101,12 +99,10 @@ class OccurrenceCompiler(object):
         assert (-90 < lat < 90), "Invalid Latitude: %d" % lat
         assert (-180 < lng < 180), "Invalid Longitude: %d" % lng
 
-        cell_ids = GenerateS2CellIds(
-            centre_lat=lat,
-            centre_lng=lng,
-            coordinate_uncertainty=None if numpy.isnan(coord_uncertainty) else coord_uncertainty,
-            uncertainty_threshold=constants.MAX_COORDINATE_UNCERTAINTY_METERS,
-            s2_cell_level=constants.STANDARD_S2_CELL_LEVEL,
+        cell_ids = Cell.from_coordinates(
+            lat=lat,
+            lng=lng,
+            uncertainty_meters=None if numpy.isnan(coord_uncertainty) else coord_uncertainty,
         )
 
         if cell_ids is None or len(cell_ids) == 0:

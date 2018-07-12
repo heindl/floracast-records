@@ -80,7 +80,3 @@ class TestOccurrenceFetch(unittest.TestCase):
         parse(FetchOccurrences(params, sources=[
             'idigbio',
         ]))
-
-
-if __name__ == '__main__':
-    unittest.main()

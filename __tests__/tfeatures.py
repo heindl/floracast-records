@@ -5,26 +5,21 @@ import sys
 
 import unittest
 from ..features.landcover import Landcover
-from ..geo.cells import GenerateS2CellIds
-from ..occurrences.compiler import OccurrenceCompiler
-from ..utils import backport
-import datetime
+from ..geo import Cell
+from ..occurrences import Occurrence
+from ..utils import TimeStamp
 
 class TestEarthEngine(unittest.TestCase):
 
     def test_landcover(self):
 
-        occurrences = [OccurrenceCompiler.decode({
+        occurrences = [Occurrence.decode({
             'source_key': 'gbif',
             'source_id': str(i),
             'name': 'Amanita fulva',
             'cell_id': int(cell_id.id()),
-            'observed_at': backport.timestamp_from_now()
-        }) for i, cell_id in enumerate(GenerateS2CellIds(
-            centre_lat=38.6530169,
-            centre_lng=-90.3835463,
-            coordinate_uncertainty=1000,
-        ))]
+            'observed_at': TimeStamp.from_now()
+        }) for i, cell_id in enumerate(Cell.from_coordinates(38.6530169, 90.3835463,1000))]
 
         r = Landcover().fetch(occurrences)
         print(r.bigquery_records)

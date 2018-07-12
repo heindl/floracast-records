@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from ..occurrences.compiler import OccurrenceCompiler
+from ..occurrences import Occurrence
 # Outlines required methods
 import abc, six
 from typing import Dict, Tuple, Union, List, NamedTuple
 import ee
 import google.auth
 import os
-
-
 
 @six.add_metaclass(abc.ABCMeta)
 class BaseFeatureGenerator(object):
@@ -41,7 +39,7 @@ class BaseFeatureGenerator(object):
     @staticmethod
     @abc.abstractmethod
     def combine(t):
-        # type: (Tuple[Tuple[str, str], List[OccurrenceCompiler]]) -> Union[None, OccurrenceCompiler]
+        # type: (Tuple[Tuple[str, str], List[Occurrence]]) -> Union[None, Occurrence]
         """
         Returns static name of table
         """
@@ -49,7 +47,7 @@ class BaseFeatureGenerator(object):
 
     @staticmethod
     @abc.abstractmethod
-    def is_complete(o): # type: (OccurrenceCompiler) -> bool
+    def is_complete(o): # type: (Occurrence) -> bool
         """
         Checks that an occurrence already has the expected feature
         """
@@ -66,7 +64,7 @@ class BaseFeatureGenerator(object):
 
     @staticmethod
     @abc.abstractmethod
-    def partition_key(occurrence): # type: (OccurrenceCompiler) -> Union[Tuple[str, str], str]
+    def partition_key(occurrence): # type: (Occurrence) -> Union[Tuple[str, str], str]
         """
            Return a key to group feature requests for efficient processing by the generator.
            In most cases, each fetcher will request one date.
@@ -75,16 +73,16 @@ class BaseFeatureGenerator(object):
 
     @staticmethod
     @abc.abstractmethod
-    def fetch(occurrences): # type: (List[OccurrenceCompiler]) -> FeatureFetchResult
+    def fetch(occurrences): # type: (List[Occurrence]) -> FeatureResponse
         """
         Generate new features for each request
         The first result
         """
         raise NotImplementedError
 
-FeatureFetchResult = NamedTuple("FeatureFetchResult", [
+FeatureResponse = NamedTuple("FeatureResponse", [
     ('bigquery_records', List[Dict]),
-    ('occurrences', List[OccurrenceCompiler])
+    ('occurrences', List[Occurrence])
 ])
 
 # class FeatureFetchResult(NamedTuple):
