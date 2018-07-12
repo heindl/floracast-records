@@ -1,0 +1,27 @@
+from unittest import TestLoader, TextTestRunner, TestSuite
+
+import os, sys
+
+os.environ['__CONSTANTS__'] = 'test'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+
+from __tests__.tfeatures import TestEarthEngine
+from __tests__.toccurrences import TestOccurrences
+from __tests__.tgeo import TestGeo
+
+if __name__ == "__main__":
+
+    loader = TestLoader()
+    tests = [
+        loader.loadTestsFromTestCase(test)
+        for test in (
+            # TestGeo,
+            TestOccurrences,
+            # TestEarthEngine,
+
+        )
+    ]
+    suite = TestSuite(tests)
+
+    runner = TextTestRunner(verbosity=2)
+    runner.run(suite)

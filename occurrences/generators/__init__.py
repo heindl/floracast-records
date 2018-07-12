@@ -1,7 +1,7 @@
 from . import gbif, idigb, inat, mycp, muob
 
 from .base import BaseOccurrenceGenerator
-from typing import List
+from typing import List, Type
 
 generators = {
     'gbif': gbif.Generator,
@@ -11,7 +11,7 @@ generators = {
     'mycoportal': mycp.Generator,
 }
 
-def OccurrenceGenerators(classes=None): # type: (List[str]) -> List[BaseOccurrenceGenerator]
+def OccurrenceGenerators(classes=None): # type: (List[str]) -> List[Type[BaseOccurrenceGenerator]]
     if classes is None:
         return list(generators.values())
 

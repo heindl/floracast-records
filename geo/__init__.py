@@ -1,1 +1,1 @@
-from .coords import Cell
+from .cell import Cell

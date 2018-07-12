@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import math
-import numbers
+import math, numbers, numpy
 from geographiclib.geodesic import Geodesic
 WGS84 = Geodesic.WGS84
 from s2_py import S2LatLng, S2LatLngRect, S2RegionCoverer, S2CellId, S2Cell
@@ -10,7 +9,6 @@ import ee
 import constants
 consts = constants.Constants()
 from typing import Union, List
-# import logging
 
 
 class Cell(S2CellId):
@@ -22,8 +20,13 @@ class Cell(S2CellId):
         return str(self.id())
 
     def bounds(self):
-        rect = S2Cell(self._S2CellId).GetRectBound()
-        return (rect.lng_lo().degrees(), rect.lat_lo().degrees(), rect.lng_hi().degrees(), rect.lat_hi().degrees())
+        rect = S2Cell(self).GetRectBound()
+        return (
+            rect.lng_lo().degrees(),
+            rect.lat_lo().degrees(),
+            rect.lng_hi().degrees(),
+            rect.lat_hi().degrees()
+        )
 
     def geojson_feature(self):
         return ee.Feature(
@@ -43,9 +46,9 @@ class Cell(S2CellId):
         lat,
         lng,
         uncertainty_meters=None,
-        uncertainty_threshold=consts['minimum_occurrence_observed_timestamp'],
+        uncertainty_threshold=consts['max_coordinate_uncertainty_meters'],
         s2_cell_level=consts['standard_s2_cell_level'],
-    ): # type: (float, float, Union[None, float], float, int) -> List[Cell]
+    ): # type: (float, float, Union[None, numpy.nan, numbers.Number], float, int) -> List[Cell]
 
         lat, lng, coordinate_uncertainty = Cell.normalize_coordinates(lat, lng, uncertainty_meters)
 
@@ -80,9 +83,15 @@ class Cell(S2CellId):
         return [cls(c.id()) for c in cell_ids]
 
     @staticmethod
-    def normalize_coordinates(lat, lng, coordinate_uncertainty=None): # type: (float, float, float) -> (float, float, float)
-        if coordinate_uncertainty is not None and isinstance(coordinate_uncertainty, numbers.Number):
-            return round(lat, 6), round(lng, 6), int(round(coordinate_uncertainty, 0))
+    def normalize_coordinates(lat, lng, uncertainty=None):
+        # type: (float, float, Union[None, numpy.nan, numbers.Number]) -> (float, float, float)
+
+        valid_uncertainty = uncertainty is not None \
+                          and uncertainty is not numpy.nan \
+                          and isinstance(uncertainty, numbers.Number)
+
+        if valid_uncertainty:
+            return round(lat, 6), round(lng, 6), int(round(uncertainty, 0))
 
         (lat_precision, lat_scale) = _precision_and_scale(lat)
         (lng_precision, lng_scale) = _precision_and_scale(lng)

@@ -3,9 +3,16 @@
 
 import unittest, numpy
 from geo import Cell
+import constants
 
 
-class TestGeometry(unittest.TestCase):
+class TestGeo(unittest.TestCase):
+
+    def test_constants(self):
+
+        consts = constants.Constants()
+        self.assertEqual(consts['standard_s2_cell_level'], 14)
+        self.assertEqual(consts['max_coordinate_uncertainty_meters'], 16000)
 
     def test_coordinate_normalization(self):
 
@@ -28,7 +35,6 @@ class TestGeometry(unittest.TestCase):
         cells = Cell.from_coordinates(
             lat=35.8021685,
             lng=-82.3451891,
-            uncertainty_threshold=6400,
             s2_cell_level=14,
         )
         self.assertEqual(len(cells), 1)
@@ -38,25 +44,48 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(rect[2], -82.33976347120388)
         self.assertEqual(rect[3], 35.80759183314543)
 
-    def test_cell_generation_at_various_levels(self):
+    def test_cell_generation_at_level_fourteen(self):
 
         for i, t in enumerate([
             (35.8021685, -82.3451891, numpy.nan, 1),
             (35.8021685, -82.3451891, 1000, 8),
-            (35.8021685, -82.3451891, 2000, 120),
-            (35.8021685, -82.3451891, 4000, 120),
-            (35.8021685, -82.3451891, 8000, 120),
-            (35.8021685, -82.3451891, 12000, 120),
-            (35.8021685, -82.3451891, 16000, 120),
-            (35.8021685, -82.3451891, 20000, 0),
-            (35.8021685, -82.3451891, 22000, 0),
-            (35.8021685, -82.3451891, 28000, 0),
-            (35.8021685, -82.3451891, 32000, 0),
+            (35.8021685, -82.3451891, 2000, 8),
+            (35.8021685, -82.3451891, 4000, 48),
+            (35.8021685, -82.3451891, 7000, 148),
+            (35.8021685, -82.3451891, 8000, 196),
+            (35.8021685, -82.3451891, 10000, 308),
+            (35.8021685, -82.3451891, 12000, 454),
+            (35.8021685, -82.3451891, 16000, 817),
+            (35.8021685, -82.3451891, 20000, 1285),
+            (35.8021685, -82.3451891, 22000, 1563),
+            (35.8021685, -82.3451891, 28000, 2543),
+            (35.8021685, -82.3451891, 32000, 3335),
         ]):
             cells = Cell.from_coordinates(
                 lat=t[0],
                 lng=t[1],
                 uncertainty_meters=t[2],
+                uncertainty_threshold=32000,
+                s2_cell_level=14,
+            )
+            self.assertEqual(len(cells), t[3])
+
+    def test_cell_generation_at_level_16(self):
+
+        for i, t in enumerate([
+            (35.8021685, -82.3451891, numpy.nan, 1),
+            (35.8021685, -82.3451891, 1000, 8),
+            (35.8021685, -82.3451891, 2000, 48),
+            (35.8021685, -82.3451891, 4000, 196),
+            (35.8021685, -82.3451891, 8000, 817),
+            (35.8021685, -82.3451891, 12000, 0),
+        ]):
+            cells = Cell.from_coordinates(
+                lat=t[0],
+                lng=t[1],
+                uncertainty_meters=t[2],
+                uncertainty_threshold=8000,
+                s2_cell_level=15,
             )
             self.assertEqual(len(cells), t[3])
 
