@@ -5,9 +5,9 @@ import requests
 import pandas as pd
 from io import StringIO
 import json
-from .base import _BaseOccurrenceGenerator
-from ..occurrence import Occurrence
-from ...utils import TimeStamp
+from .base import BaseOccurrenceGenerator
+from .. import Occurrence
+from utils import TimeStamp
 
 fields = [
     "id",
@@ -101,7 +101,7 @@ fields = [
     # "references",
 ]
 
-class _Generator(_BaseOccurrenceGenerator):
+class Generator(BaseOccurrenceGenerator):
 
     @staticmethod
     def source_key():

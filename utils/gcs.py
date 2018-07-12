@@ -2,7 +2,8 @@
 # encoding: utf-8
 
 import google.auth
-
+import constants
+consts = constants.Constants()
 
 
 # import os
@@ -14,7 +15,10 @@ def default_project():
 
     credentials, project_id = google.auth.default()
 
-    return project_id
+    if project_id is not None and len(project_id) != 0:
+        return project_id
+    else:
+        return consts['gcloud_project']
 
     # get_project = [
     #     'gcloud', 'config', 'list', 'project', '--format=value(core.project)'

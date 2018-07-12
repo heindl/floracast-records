@@ -5,8 +5,8 @@ from idigbio import pandas
 import pandas as pd
 from pandas.io.json import json_normalize
 from .. import Occurrence
-from ...utils import TimeStamp
-from .base import _BaseOccurrenceGenerator
+from utils import TimeStamp
+from .base import BaseOccurrenceGenerator
 
 FIELDS = [
     'uuid',
@@ -60,7 +60,7 @@ FIELDS = [
     # 'typestatus',
  ]
 
-class _Generator(_BaseOccurrenceGenerator):
+class Generator(BaseOccurrenceGenerator):
 
     @staticmethod
     def source_key():

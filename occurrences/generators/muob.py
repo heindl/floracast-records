@@ -3,12 +3,12 @@
 
 import requests
 import pandas
-from ..occurrence import Occurrence
+from .. import Occurrence
 from pandas.io.json import json_normalize
 from geographiclib.geodesic import Geodesic
 WGS84 = Geodesic.WGS84
-from .base import _BaseOccurrenceGenerator
-from ...utils import TimeStamp
+from .base import BaseOccurrenceGenerator
+from utils import TimeStamp
 
 # Note that most of these are nested json structs.
 fields = [
@@ -39,7 +39,7 @@ fields = [
     "updated_at",
 ]
 
-class _Generator(_BaseOccurrenceGenerator):
+class Generator(BaseOccurrenceGenerator):
 
     @staticmethod
     def source_key():

@@ -37,8 +37,9 @@ class Cell(S2CellId):
             }),
         )
 
-    @staticmethod
+    @classmethod
     def from_coordinates(
+        cls,
         lat,
         lng,
         uncertainty_meters=None,
@@ -46,7 +47,7 @@ class Cell(S2CellId):
         s2_cell_level=consts['standard_s2_cell_level'],
     ): # type: (float, float, Union[None, float], float, int) -> List[Cell]
 
-        lat, lng, coordinate_uncertainty = _normalize_coordinates(lat, lng, uncertainty_meters)
+        lat, lng, coordinate_uncertainty = Cell.normalize_coordinates(lat, lng, uncertainty_meters)
 
         if coordinate_uncertainty > uncertainty_threshold:
             return []
@@ -76,30 +77,31 @@ class Cell(S2CellId):
 
         # logging.info("S2 Covering [%d] Generated [%f, %f, %f]", len(cell_ids), lat, lng, coordinate_uncertainty)
 
-        return [Cell(c.id()) for c in cell_ids]
+        return [cls(c.id()) for c in cell_ids]
 
-def _normalize_coordinates(lat, lng, coordinate_uncertainty=None): # type: (float, float, float) -> (float, float, float)
-    if coordinate_uncertainty is not None and isinstance(coordinate_uncertainty, numbers.Number):
-        return round(lat, 6), round(lng, 6), int(round(coordinate_uncertainty, 0))
+    @staticmethod
+    def normalize_coordinates(lat, lng, coordinate_uncertainty=None): # type: (float, float, float) -> (float, float, float)
+        if coordinate_uncertainty is not None and isinstance(coordinate_uncertainty, numbers.Number):
+            return round(lat, 6), round(lng, 6), int(round(coordinate_uncertainty, 0))
 
-    (lat_precision, lat_scale) = _precision_and_scale(lat)
-    (lng_precision, lng_scale) = _precision_and_scale(lng)
+        (lat_precision, lat_scale) = _precision_and_scale(lat)
+        (lng_precision, lng_scale) = _precision_and_scale(lng)
 
-    min_scale = min([lat_scale, lng_scale])
+        min_scale = min([lat_scale, lng_scale])
 
-    if min_scale >= 6:
-        return (round(lat, 6), round(lng, 6), 0)
+        if min_scale >= 6:
+            return (round(lat, 6), round(lng, 6), 0)
 
-    equatorial_precision_in_meters = [
-        111320,
-        11132,
-        1113,
-        111,
-        11,
-        1,
-    ]
+        equatorial_precision_in_meters = [
+            111320,
+            11132,
+            1113,
+            111,
+            11,
+            1,
+        ]
 
-    return (lat, lng, equatorial_precision_in_meters[min_scale])
+        return (lat, lng, equatorial_precision_in_meters[min_scale])
 
 def _precision_and_scale(x):
     max_digits = 14

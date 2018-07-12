@@ -66,7 +66,7 @@ if __name__ == '__main__':
         name='florecords',
         version='0.0.1',
         description='Files for compiling Floracast prediction data',
-        packages=setuptools.find_packages(),
+        packages=setuptools.find_packages(exclude=('tests', 'docs')),
         url="https://bitbucket.org/heindl/florecords",
         author="mph",
         author_email="matt@floracast.com",

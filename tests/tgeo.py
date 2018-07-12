@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import unittest
-from ..geo import cells
+import unittest, numpy
+from geo import Cell
 
 
 class TestGeometry(unittest.TestCase):
 
-    def test_coordinate_format(self):
+    def test_coordinate_normalization(self):
 
         for t in [
             [[44, -67, None], [44, -67, 111320]],
@@ -19,23 +19,26 @@ class TestGeometry(unittest.TestCase):
         ]:
             q = t[0]
             a = t[1]
-            r = cells.NormalizeCoordinates(q[0], q[1], q[2])
+            r = Cell.normalize_coordinates(q[0], q[1], q[2])
             for i in range(3):
                 self.assertEqual(r[i], a[i])
 
-    def test_s2_cells(self):
+    def test_cell_generation_from_coordinates_at_one_level(self):
 
-        cell_ids = cells.GenerateS2CellIds(35.8021685, -82.3451891, 6400, 14)
-        self.assertEqual(len(cell_ids), 1)
-
-        rect = DecodeCellIDAsGeoJSONRectangle(cell_ids[0])
-
+        cells = Cell.from_coordinates(
+            lat=35.8021685,
+            lng=-82.3451891,
+            uncertainty_threshold=6400,
+            s2_cell_level=14,
+        )
+        self.assertEqual(len(cells), 1)
+        rect = cells[0].bounds()
         self.assertEqual(rect[0], -82.34518902474312)
         self.assertEqual(rect[1], 35.80182243257457)
         self.assertEqual(rect[2], -82.33976347120388)
         self.assertEqual(rect[3], 35.80759183314543)
 
-    def test_s2_cells_2(self):
+    def test_cell_generation_at_various_levels(self):
 
         for i, t in enumerate([
             (35.8021685, -82.3451891, numpy.nan, 1),
@@ -45,22 +48,17 @@ class TestGeometry(unittest.TestCase):
             (35.8021685, -82.3451891, 8000, 120),
             (35.8021685, -82.3451891, 12000, 120),
             (35.8021685, -82.3451891, 16000, 120),
-            (35.8021685, -82.3451891, 20000, 120),
-            (35.8021685, -82.3451891, 22000, 120),
-            (35.8021685, -82.3451891, 28000, 120),
-            (35.8021685, -82.3451891, 32000, 120),
+            (35.8021685, -82.3451891, 20000, 0),
+            (35.8021685, -82.3451891, 22000, 0),
+            (35.8021685, -82.3451891, 28000, 0),
+            (35.8021685, -82.3451891, 32000, 0),
         ]):
-            g = OccurrenceCompiler(
-                id="1",
-                scientific_name="Morchella delisiosa",
-                observation_datetime=int(time.time()),
-                coord_uncertainty=t[2],
+            cells = Cell.from_coordinates(
                 lat=t[0],
                 lng=t[1],
-                source="gbif",
-                family="morchellaceae"
+                uncertainty_meters=t[2],
             )
-            print(t[2], len(list(g.decompose())))
+            self.assertEqual(len(cells), t[3])
 
 
 if __name__ == '__main__':

@@ -4,8 +4,8 @@
 import requests
 import pandas
 from pandas.io.json import json_normalize
-from .base import _BaseOccurrenceGenerator
-from ...utils import TimeStamp
+from .base import BaseOccurrenceGenerator
+from utils import TimeStamp
 import math
 from .. import Occurrence
 
@@ -79,7 +79,7 @@ fields = [
     # "votes",
 ]
 
-class _Generator(_BaseOccurrenceGenerator):
+class Generator(BaseOccurrenceGenerator):
 
     @staticmethod
     def source_key():

@@ -4,13 +4,13 @@
 import pandas
 import constants
 consts = constants.Constants()
-from ...utils import TimeStamp
+from utils import TimeStamp
 from .. import Occurrence, NorthAmericanMacroFungiFamilies
 import abc, six
 from typing import Generator
 
 @six.add_metaclass(abc.ABCMeta)
-class _BaseOccurrenceGenerator(object):
+class BaseOccurrenceGenerator(object):
     __metaclass__  = abc.ABCMeta
 
     def __init__(self,

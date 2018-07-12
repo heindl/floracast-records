@@ -2,9 +2,9 @@
 # encoding: utf-8
 
 import numpy
-from . import NorthAmericanMacroFungiFamilies
-from ..geo import Cell
-from ..utils import TimeStamp
+from .taxa import NorthAmericanMacroFungiFamilies
+from geo import Cell
+from utils import TimeStamp
 from typing import Dict, Union
 import constants
 consts = constants.Constants()
@@ -94,7 +94,7 @@ class Occurrence(object):
                  lng, # type: float
                  coord_uncertainty, # type: float
                  family, # type: str
-                 ):
+                 ): # type: () -> Union[Occurrence, None]
 
         assert (-90 < lat < 90), "Invalid Latitude: %d" % lat
         assert (-180 < lng < 180), "Invalid Longitude: %d" % lng

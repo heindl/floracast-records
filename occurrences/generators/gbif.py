@@ -4,8 +4,8 @@
 from pygbif import occurrences, species
 import pandas as pd
 from .. import Occurrence
-from ...utils import TimeStamp
-from .base import _BaseOccurrenceGenerator
+from utils import TimeStamp
+from .base import BaseOccurrenceGenerator
 from typing import Dict
 
 gbif_fields = [
@@ -102,7 +102,7 @@ gbif_fields = [
     # "year",
 ]
 
-class _Generator(_BaseOccurrenceGenerator):
+class Generator(BaseOccurrenceGenerator):
 
     @staticmethod
     def source_key():

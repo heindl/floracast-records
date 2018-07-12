@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-from ..occurrences import Occurrence
+from occurrences import Occurrence
 # Outlines required methods
 import abc, six
 from typing import Dict, Tuple, Union, List, NamedTuple

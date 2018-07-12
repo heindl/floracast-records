@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import sys
-
 import unittest
-from ..features.landcover import Landcover
-from ..geo import Cell
-from ..occurrences import Occurrence
-from ..utils import TimeStamp
+from features.landcover import Landcover
+from geo import Cell
+from occurrences import Occurrence
+from utils import TimeStamp
 
 class TestEarthEngine(unittest.TestCase):
 
@@ -67,7 +65,3 @@ class TestEarthEngine(unittest.TestCase):
     #                 expect,
     #                 'Feature [%s] at request [%d] has value [%s] but expected [%s]' % (k, r.id(), actual, expect)
     #             )
-
-
-if __name__ == '__main__':
-    unittest.main()

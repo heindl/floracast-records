@@ -3,9 +3,9 @@
 
 import ee
 from . import BaseFeatureGenerator, FeatureResponse
-from ..occurrences import CompileOccurrenceSQLQuery, Occurrence
-from ..geo import Cell
-from ..utils import TimeStamp
+from occurrences import CompileOccurrenceSQLQuery, Occurrence
+from geo import Cell
+from utils import TimeStamp
 from typing import List, Tuple, Union
 import collections
 

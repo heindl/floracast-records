@@ -3,7 +3,6 @@
 
 from datetime import datetime
 import time as mod_time
-from typing import Union
 
 try:
     from urllib.parse import quote_plus

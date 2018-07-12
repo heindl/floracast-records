@@ -3,7 +3,7 @@
 
 from google.cloud import firestore, exceptions
 import requests
-from ..utils import quote_encode_string
+from utils import quote_encode_string
 import logging
 
 _firestore_collection = 'CanonicalNameLabels'

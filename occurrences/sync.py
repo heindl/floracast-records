@@ -2,7 +2,8 @@
 # encoding: utf-8
 
 from google.cloud import firestore
-from ..utils import as_unicode, quote_encode_string, TimeStamp
+from .generators import OccurrenceGenerators
+from utils import as_unicode, quote_encode_string, TimeStamp, default_project
 
 _firestore_collection = u'OccurrenceFetchHistory'
 
@@ -58,9 +59,6 @@ def RegisterOccurrenceSync(
     })
 
 if __name__ == '__main__':
-    from .generators import OccurrenceGenerators
-    from ..utils import default_project
-
     for g in OccurrenceGenerators():
         RegisterOccurrenceSync(
             project=default_project(),
