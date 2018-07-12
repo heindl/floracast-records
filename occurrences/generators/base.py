@@ -7,7 +7,7 @@ consts = constants.Constants()
 from utils import TimeStamp
 from .. import Occurrence, NorthAmericanMacroFungiFamilies
 import abc, six
-from typing import Generator
+from typing import Generator, Union
 
 @six.add_metaclass(abc.ABCMeta)
 class BaseOccurrenceGenerator(object):
@@ -24,18 +24,18 @@ class BaseOccurrenceGenerator(object):
                  updated_after=consts['minimum_occurrence_observed_timestamp'], # type: int
                  updated_before=TimeStamp.from_now(), # type: int
         ):
-            self.family = family
-            self.min_x = min_x
-            self.max_x = max_x
-            self.min_y = min_y
-            self.max_y = max_y
-            self.observed_after=observed_after
-            self.observed_before=observed_before
-            self.updated_after=updated_after
-            self.updated_before=updated_before
+            self._family = family
+            self._min_x = min_x
+            self._max_x = max_x
+            self._min_y = min_y
+            self._max_y = max_y
+            self._observed_after=observed_after
+            self._observed_before=observed_before
+            self._updated_after=updated_after
+            self._updated_before=updated_before
 
-            if self.family not in NorthAmericanMacroFungiFamilies:
-                raise ValueError("Unrecognized fungi family: %s" % self.family)
+            if self._family not in NorthAmericanMacroFungiFamilies:
+                raise ValueError("Invalid occurrence family: %s" % self.family)
 
     def filter_occurrence_dataframe(self, df): # type: (pandas.DataFrame) -> pandas.DataFrame
 
@@ -49,7 +49,7 @@ class BaseOccurrenceGenerator(object):
             'modified_at',
             'source_id',
             'family',
-            'source'
+            'source_key'
         ]:
             if expected not in given_columns:
                 raise ValueError("Missing expected DataFrame column: %s" % expected)
@@ -100,7 +100,7 @@ class BaseOccurrenceGenerator(object):
 
     @abc.abstractmethod
     def generate(self):
-        # type: () -> Generator[Occurrence]
+        # type: () -> Generator[Union[None, Occurrence]]
         """
         Returns static name of table
         """

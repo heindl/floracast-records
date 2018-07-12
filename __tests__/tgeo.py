@@ -8,12 +8,6 @@ import constants
 
 class TestGeo(unittest.TestCase):
 
-    def test_constants(self):
-
-        consts = constants.Constants()
-        self.assertEqual(consts['standard_s2_cell_level'], 14)
-        self.assertEqual(consts['max_coordinate_uncertainty_meters'], 16000)
-
     def test_coordinate_normalization(self):
 
         for t in [
@@ -44,6 +38,24 @@ class TestGeo(unittest.TestCase):
         self.assertEqual(rect[2], -82.33976347120388)
         self.assertEqual(rect[3], 35.80759183314543)
 
+    def test_constants(self):
+
+        consts = constants.Constants()
+        self.assertEqual(consts['standard_s2_cell_level'], 14)
+        self.assertEqual(consts['max_coordinate_uncertainty_meters'], 7000)
+
+        self.assertEqual(len(Cell.from_coordinates(
+            lat=35.8021685,
+            lng=-82.3451891,
+            uncertainty_meters=4000,
+        )), 48)
+
+        self.assertEqual(len(Cell.from_coordinates(
+            lat=35.8021685,
+            lng=-82.3451891,
+            uncertainty_meters=18000,
+        )), 0)
+
     def test_cell_generation_at_level_fourteen(self):
 
         for i, t in enumerate([
@@ -70,7 +82,7 @@ class TestGeo(unittest.TestCase):
             )
             self.assertEqual(len(cells), t[3])
 
-    def test_cell_generation_at_level_16(self):
+    def test_cell_generation_at_level_sixteen(self):
 
         for i, t in enumerate([
             (35.8021685, -82.3451891, numpy.nan, 1),

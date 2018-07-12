@@ -3,7 +3,6 @@
 
 import unittest
 from features.landcover import Landcover
-from geo import Cell
 from occurrences import Occurrence
 from utils import TimeStamp
 
@@ -11,17 +10,46 @@ class TestEarthEngine(unittest.TestCase):
 
     def test_landcover(self):
 
-        occurrences = [Occurrence.decode({
-            'source_key': 'gbif',
-            'source_id': str(i),
-            'name': 'Amanita fulva',
-            'cell_id': int(cell_id.id()),
-            'observed_at': TimeStamp.from_now()
-        }) for i, cell_id in enumerate(Cell.from_coordinates(38.6530169, 90.3835463,1000))]
+        occurrence = Occurrence.from_raw(
+            source_id="1234",
+            source_key="gbif",
+            name="Amanita fulva",
+            observed_at=TimeStamp.from_now(),
+            lat=38.6530169,
+            lng=90.3835463,
+            coord_uncertainty=2000,
+            family="amanitaceae"
+        )
+        self.assertIsNotNone(occurrence)
 
-        r = Landcover().fetch(occurrences)
-        print(r.bigquery_records)
-        print([o.get_feature('landcover') for o in r.occurrences])
+        expected_records = [
+            {'cell_id': 4001881343356043264, 'landcover': {200: 2}},
+            {'cell_id': 4001881472205062144, 'landcover': {200: 4}},
+            {'cell_id': 4002054464897810432, 'landcover': {140: 2, 200: 2}},
+            {'cell_id': 4001881351945977856, 'landcover': {200: 4}},
+            {'cell_id': 4001881463615127552, 'landcover': {200: 4}},
+            {'cell_id': 4002054473487745024, 'landcover': {200: 4}},
+            {'cell_id': 4002054482077679616, 'landcover': {200: 4}},
+            {'cell_id': 4002054507847483392, 'landcover': {200: 2}}
+        ]
+
+        landcover_response = Landcover().fetch([o for o in occurrence.split()])
+
+        # Clear timestamp for comparison
+        records = []
+        for r in landcover_response.bigquery_records:
+            del r['created_at']
+            records.append(r)
+
+        self.assertListEqual(
+            sorted(records, key=lambda k: k['cell_id']),
+            sorted(expected_records, key=lambda k: k['cell_id']),
+        )
+
+        self.assertListEqual(
+            [o.get_feature('landcover') for o in landcover_response.occurrences],
+            [{200: 2}, {200: 4}, {200: 4}, {200: 4}, {140: 2, 200: 2}, {200: 4}, {200: 4}, {200: 2}]
+        )
 
     # def test_terrain(self):
     #

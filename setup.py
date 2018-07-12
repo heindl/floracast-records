@@ -4,8 +4,6 @@ from setuptools.command.build_py import build_py as _build_py
 import subprocess
 import distutils
 
-# 1063757818890-compute@developer.gserviceaccount.com
-
 class build_py(_build_py):
 
     def _run_subprocess(self, command_list):
@@ -66,7 +64,7 @@ if __name__ == '__main__':
         name='florecords',
         version='0.0.1',
         description='Files for compiling Floracast prediction data',
-        packages=setuptools.find_packages(exclude=('tests', 'docs')),
+        packages=setuptools.find_packages(exclude=('__tests__', 'docs')),
         url="https://bitbucket.org/heindl/florecords",
         author="mph",
         author_email="matt@floracast.com",

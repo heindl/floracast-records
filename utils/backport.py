@@ -40,9 +40,9 @@ def quote_encode_string(
 ):
     return quote_plus(str)
 
-def as_unicode(s):
-    # return s.decode('utf-8')
-    try:
-        return s.decode('utf-8')
-    except:
-        return s
+# def as_unicode(s):
+#     # return s.decode('utf-8')
+#     try:
+#         return s.decode('utf-8')
+#     except:
+#         return s

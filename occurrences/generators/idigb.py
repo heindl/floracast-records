@@ -107,7 +107,7 @@ class Generator(BaseOccurrenceGenerator):
         df = df.assign(
             lat=coords['lat'].values,
             lng=coords['lon'].values,
-            source=lambda x: 'idigbio',
+            source_key=lambda x: 'idigbio',
             source_id=df.index.values
         )
 
@@ -131,4 +131,4 @@ class Generator(BaseOccurrenceGenerator):
         df = self.filter_occurrence_dataframe(df)
 
         for record in df.to_dict('records'):
-            yield Occurrence(**record)
+            yield Occurrence.from_raw(**record)

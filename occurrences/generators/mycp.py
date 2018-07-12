@@ -133,7 +133,7 @@ class Generator(BaseOccurrenceGenerator):
             'id': 'source_id'
         }, inplace=True)
 
-        df = df.assign(source = lambda x: 'mycoportal')
+        df = df.assign(source_key = lambda x: 'mycoportal')
 
         # Convert to EpochTime
         df['observed_at']  = pd.to_datetime(df['observed_at'])
@@ -149,7 +149,7 @@ class Generator(BaseOccurrenceGenerator):
         df = self.filter_occurrence_dataframe(df)
 
         for record in df.to_dict('records'):
-            yield Occurrence(**record)
+            yield Occurrence.from_raw(**record)
 
 
     def _fetch(self):

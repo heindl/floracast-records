@@ -2,7 +2,7 @@ from unittest import TestLoader, TextTestRunner, TestSuite
 
 import os, sys
 
-os.environ['__CONSTANTS__'] = 'test'
+os.environ['__CONSTANTS__'] = 'TEST'
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 
 from __tests__.tfeatures import TestEarthEngine
@@ -15,9 +15,9 @@ if __name__ == "__main__":
     tests = [
         loader.loadTestsFromTestCase(test)
         for test in (
-            # TestGeo,
+            TestGeo,
             TestOccurrences,
-            # TestEarthEngine,
+            TestEarthEngine,
 
         )
     ]

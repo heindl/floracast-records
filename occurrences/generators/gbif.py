@@ -110,7 +110,7 @@ class Generator(BaseOccurrenceGenerator):
 
     def generate(self):
         offset = 0
-        family_key = self._family_key()
+        family_key = self._get_family_key()
 
         while True:
 
@@ -138,7 +138,7 @@ class Generator(BaseOccurrenceGenerator):
             offset += len(j['results'])
 
             for record in self._parse_results(j['results']):
-                yield Occurrence(**record)
+                yield Occurrence.from_raw(**record)
 
             if j['endOfRecords'] is True:
                 break
@@ -161,7 +161,7 @@ class Generator(BaseOccurrenceGenerator):
             # 'lastInterpreted': 'modified'
         }, inplace=True)
 
-        df = df.assign(source = lambda x: 'gbif')
+        df = df.assign(source_key = lambda x: 'gbif')
 
         # Convert to EpochTime
         df['observed_at']  = pd.to_datetime(df['observed_at'])

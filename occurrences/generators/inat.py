@@ -107,7 +107,7 @@ class Generator(BaseOccurrenceGenerator):
                 ancestry = taxon['ancestry'],
                 lat = location[0].values.astype(dtype=float),
                 lng = location[1].values.astype(dtype=float),
-                source = lambda x: 'inaturalist',
+                source_key = lambda x: 'inaturalist',
                 family = lambda x: self._family
             )
 
@@ -130,7 +130,7 @@ class Generator(BaseOccurrenceGenerator):
             df = self.filter_occurrence_dataframe(df)
 
             for record in df.to_dict('records'):
-                yield Occurrence(**record)
+                yield Occurrence.from_raw(**record)
 
 
     def _taxon_id(self):

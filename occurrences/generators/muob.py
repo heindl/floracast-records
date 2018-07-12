@@ -120,7 +120,7 @@ class Generator(BaseOccurrenceGenerator):
                 lat = location[0].values,
                 lng = location[1].values,
                 coord_uncertainty = location[2].values,
-                source = lambda x: 'mushroomobserver',
+                source_key = lambda x: 'mushroomobserver',
                 family = lambda x: self._family
             )
 
@@ -140,4 +140,4 @@ class Generator(BaseOccurrenceGenerator):
             df = self.filter_occurrence_dataframe(df)
 
             for record in df.to_dict('records'):
-                yield Occurrence(**record)
+                yield Occurrence.from_raw(**record)

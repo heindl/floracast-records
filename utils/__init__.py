@@ -1,3 +1,3 @@
 from .gcs import default_project
 
-from .backport import TimeStamp, quote_encode_string, as_unicode
+from .backport import TimeStamp, quote_encode_string

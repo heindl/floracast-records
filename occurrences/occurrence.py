@@ -5,7 +5,7 @@ import numpy
 from .taxa import NorthAmericanMacroFungiFamilies
 from geo import Cell
 from utils import TimeStamp
-from typing import Dict, Union
+from typing import Dict, Union, Generator
 import constants
 consts = constants.Constants()
 
@@ -18,7 +18,7 @@ class Occurrence(object):
                  observed_at, # type: float
                  cell_ids, # List[int]
                  created_at=None, # type: int
-                 ):
+        ):
 
         self._source_id = source_id
         self._source_key = source_key
@@ -62,16 +62,28 @@ class Occurrence(object):
 
     def cell(self): # type: () -> Cell
         if len(self._cell_ids) != 1:
-            raise ValueError("Invalid number of S2CellIds")
+            raise ValueError("If cell is called, the occurrence is expected to have only one cell.")
         return Cell(self._cell_ids[0])
+
+    def split(self): # type: () -> Generator[Occurrence]
+        for c in self._cell_ids:
+            yield Occurrence(
+                source_id=self.source_id(),
+                source_key=self.source_key(),
+                name=self.name(),
+                observed_at=self.observed_at(),
+                cell_ids=[c],
+                created_at=self._created_at,
+            )
 
     def _validate(self):
         assert len(self._source_id) > 0, "Invalid occurrence id"
         assert len(self._cell_ids) > 0, "Invalid number of cell ids"
         assert len(self._name) > 0, "Invalid occurrence scientific name"
-        assert self._observed_at > consts['minimum_occurrence_observed_timestamp']
-        if self._source_key not in ["idigbio", "gbif", "inaturalist", "mushroomobserver", "mycoportal"]:
-            raise ValueError("Invalid source: %s", self._source_key)
+
+        assert self._observed_at > consts['minimum_occurrence_observed_timestamp'], \
+            "Occurrence timestamp [%s] is earlier than minimum expected timestamp [%s]" % (self._observed_at, consts['minimum_occurrence_observed_timestamp'])
+        assert isinstance(self._source_key, str) and len(self._source_key) > 0
 
     # def source_id(self):
     #     return int(hashlib.md5(("%s+%s" % (self._source, self._source_id)).encode("utf-8")).hexdigest(), 16)
@@ -94,6 +106,7 @@ class Occurrence(object):
                  lng, # type: float
                  coord_uncertainty, # type: float
                  family, # type: str
+                 **kwargs
                  ): # type: () -> Union[Occurrence, None]
 
         assert (-90 < lat < 90), "Invalid Latitude: %d" % lat

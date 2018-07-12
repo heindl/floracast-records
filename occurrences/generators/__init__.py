@@ -11,6 +11,8 @@ generators = {
     'mycoportal': mycp.Generator,
 }
 
+OccurrenceSourceKeys = list(generators.keys())
+
 def OccurrenceGenerators(classes=None): # type: (List[str]) -> List[Type[BaseOccurrenceGenerator]]
     if classes is None:
         return list(generators.values())
