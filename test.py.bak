@@ -3,10 +3,10 @@ from unittest import TestLoader, TextTestRunner, TestSuite
 import os, sys
 
 os.environ['__CONSTANTS__'] = 'TEST'
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
+# sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '.')))
 
-from __tests__.tfeatures import TestEarthEngine
-from __tests__.toccurrences import TestOccurrences
+# from __tests__.tfeatures import TestEarthEngine
+# from __tests__.toccurrences import TestOccurrences
 from __tests__.tgeo import TestGeo
 
 if __name__ == "__main__":
@@ -16,8 +16,8 @@ if __name__ == "__main__":
         loader.loadTestsFromTestCase(test)
         for test in (
             TestGeo,
-            TestOccurrences,
-            TestEarthEngine,
+            # TestOccurrences,
+            # TestEarthEngine,
 
         )
     ]
